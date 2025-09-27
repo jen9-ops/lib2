@@ -17,7 +17,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Apple PWA tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Карта-панель">
@@ -218,11 +217,11 @@
         #calendar-column { flex-basis: 300px; flex-grow: 0; }
 
         /* --- EVENTS AND LAYERS LIST --- */
-        #events-list { list-style: none; padding: 0; margin: 0; }
-        #events-list li { padding: 10px 8px; font-size: 14px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; color: var(--text-color); }
+        #events-list { list-style: none; padding: 0; margin: 0; }
+        #events-list li { padding: 10px 8px; font-size: 14px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; color: var(--text-color); }
         body.dark-theme #events-list li { color: var(--text-color); }
-        #events-list li:hover, #events-list li.highlighted { background-color: rgba(0, 122, 255, 0.1); }
-        .layer-legend-color { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 3px; vertical-align: middle;}
+        #events-list li:hover, #events-list li.highlighted { background-color: rgba(0, 122, 255, 0.1); }
+        .layer-legend-color { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 3px; vertical-align: middle;}
 
         /* --- MODALS --- */
         .modal-overlay {
@@ -278,28 +277,28 @@
         
         #modal-info p { margin: 8px 0; color: var(--text-color); }
         body.dark-theme #modal-info p { color: var(--text-color); }
-        #modal-info p strong { color: #555; }
+        #modal-info p strong { color: #555; }
         body.dark-theme #modal-info p strong { color: #aaa; }
-        #modal-actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 15px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 15px;
-        }
-        #modal-actions button {
-            border: none;
-            background: var(--accent-color);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-        #modal-actions button:hover {
-            background-color: #0056b3;
-        }
+        #modal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+        #modal-actions button {
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        #modal-actions button:hover {
+            background-color: #0056b3;
+        }
 
         /* --- TOOLBAR SETTINGS MODAL --- */
         #toolbar-button-list {
@@ -413,7 +412,7 @@
             border-color: var(--accent-color);
         }
         
-        #drawing-toolbar {
+        #drawing-toolbar, #mortar-toolbar {
             position: absolute;
             top: 10px;
             left: 50%;
@@ -568,13 +567,10 @@
         </button>
     </div>
 
-    <!-- This button is now permanent and opens the settings modal -->
     <button id="toolbar-settings-button" title="Налаштувати панель"><i class="fa-solid fa-gears"></i></button>
 
-    <!-- This div will be dynamically populated with visible, draggable buttons -->
     <div id="action-buttons"></div>
 
-    <!-- Hidden container for button templates -->
     <div id="button-templates" style="display: none;">
         <button id="theme-toggle-button" class="action-button" title="Змінити тему"><i class="fa-solid fa-moon"></i></button>
         <button id="sync-button" class="action-button" title="Синхронізувати з Google Sheet"><i class="fa-solid fa-sync"></i><span id="sync-badge"></span></button>
@@ -582,6 +578,7 @@
         <button id="add-point-button" class="action-button" title="Додати власну точку"><i class="fa-solid fa-map-pin"></i></button>
         <button id="draw-button" class="action-button" title="Інструменти малювання"><i class="fa-solid fa-pencil-ruler"></i></button>
         <button id="measure-button" class="action-button" title="Виміряти відстань"><i class="fa-solid fa-ruler-horizontal"></i></button>
+        <button id="mortar-button" class="action-button" title="Дальність міномета"><i class="fa-solid fa-bullseye"></i></button>
         <button id="gps-button" class="action-button" title="Знайти моє місцеположення"><i class="fa-solid fa-location-crosshairs"></i></button>
         <button id="upload-button" class="action-button" title="Завантажити логи"><i class="fa-solid fa-upload"></i></button>
         <button id="export-button" class="action-button" title="Експорт (GeoJSON)"><i class="fa-solid fa-file-export"></i></button>
@@ -602,9 +599,9 @@
     <div id="iframe-overlay" class="modal-overlay">
         <div class="iframe-container">
              <div class="iframe-controls">
-                <button id="transfer-coords-button" class="iframe-button" title="Перенести координати з центру екрана"><i class="fa-solid fa-crosshairs"></i> Перенести</button>
-                <button id="iframe-close-button" class="iframe-button" title="Закрити"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+                 <button id="transfer-coords-button" class="iframe-button" title="Перенести координати з центру екрана"><i class="fa-solid fa-crosshairs"></i> Перенести</button>
+                 <button id="iframe-close-button" class="iframe-button" title="Закрити"><i class="fa-solid fa-xmark"></i></button>
+             </div>
             <iframe id="deepstate-iframe" src="https://deepstatemap.live" frameborder="0"></iframe>
             <div id="leaflet-overlay-map"></div>
         </div>
@@ -626,7 +623,12 @@
         <button class="draw-tool-button" id="close-draw-toolbar" title="Закрити"><i class="fa-solid fa-times"></i></button>
     </div>
 
-    <!-- Modals -->
+    <div id="mortar-toolbar" class="ui-element" style="display: none;">
+        <button class="draw-tool-button" data-mortar-type="82mm">82мм</button>
+        <button class="draw-tool-button" data-mortar-type="120mm">120мм</button>
+        <button class="draw-tool-button" id="close-mortar-toolbar" title="Закрити"><i class="fa-solid fa-times"></i></button>
+    </div>
+
     <div id="toolbar-settings-modal-overlay" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close">&times;</button>
@@ -693,11 +695,11 @@
             </div>
             <div id="military-icon-container" class="form-group" style="display: none;">
                 <div id="military-icon-categories"></div>
-                 <div class="color-picker-container" style="justify-content: flex-start; margin-top:10px;">
-                    <label for="military-icon-color-picker">Колір значка:</label>
-                    <input type="color" id="military-icon-color-picker" value="#0000FF">
-                </div>
-                <div id="military-icon-grid"></div>
+                 <div class="color-picker-container" style="display: flex; align-items: center; gap: 10px; margin-top:10px;">
+                     <label for="military-icon-color-picker" style="margin-bottom: 0;">Колір значка:</label>
+                     <input type="color" id="military-icon-color-picker" value="#0000FF" style="height: 25px; width: 25px; padding: 1px; border-radius: 4px; border: 1px solid var(--border-color); background-color: transparent;">
+                 </div>
+                <div id="military-icon-grid" style="margin-top: 10px;"></div>
             </div>
             <div id="point-url-source-group" class="form-group" style="display: none;">
                  <label for="point-url-input">Посилання на іконку:</label>
@@ -737,6 +739,12 @@
         let drawnItemsHistory = [];
         let currentDrawHandler = null;
 
+        // --- NEW: Mortar Constants ---
+        const MORTAR_RANGES = {
+            '82mm': { min: 100, max: 4000 },
+            '120mm': { min: 480, max: 7100 }
+        };
+
         // --- Map and layers initialization ---
         const map = L.map('map', { zoomControl: false }).setView([50.41, 30.64], 11);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -761,6 +769,7 @@
         const coordsDisplay = document.getElementById('coords-display');
         const customPointModal = document.getElementById('custom-point-modal-overlay');
         const drawingToolbar = document.getElementById('drawing-toolbar');
+        const mortarToolbar = document.getElementById('mortar-toolbar');
         let overlayMap = null;
         let overlayLayersGroup = L.layerGroup();
         
@@ -777,6 +786,7 @@
             { id: 'add-point-button', title: 'Додати точку', icon: 'fa-solid fa-map-pin' },
             { id: 'draw-button', title: 'Малювання', icon: 'fa-solid fa-pencil-ruler' },
             { id: 'measure-button', title: 'Виміряти відстань', icon: 'fa-solid fa-ruler-horizontal' },
+            { id: 'mortar-button', title: 'Дальність міномета', icon: 'fa-solid fa-bullseye' },
             { id: 'gps-button', title: 'Моє місце', icon: 'fa-solid fa-location-crosshairs' },
             { id: 'upload-button', title: 'Завантажити лог', icon: 'fa-solid fa-upload' },
             { id: 'export-button', title: 'Експорт', icon: 'fa-solid fa-file-export' },
@@ -1173,16 +1183,16 @@
                 if (layer.getLatLngs) { L.polyline(layer.getLatLngs(), layer.options).addTo(overlayLayersGroup); }
                 else if (layer.getLatLng) { L.marker(layer.getLatLng(), layer.options).addTo(overlayLayersGroup); }
             });
-         }
+           }
         function openEventModal(log, coordinates) {
              currentModalLog = { log: log, coordinates: coordinates };
-            document.getElementById('modal-title').textContent = log.name || 'Деталі події';
-            document.getElementById('modal-coords').textContent = `${coordinates[0].toFixed(5)}, ${coordinates[1].toFixed(5)}`;
-            const eventDate = new Date(log.timestamp);
-            document.getElementById('modal-datetime').textContent = eventDate.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
-            document.getElementById('modal-comment').textContent = log.comment || 'Немає';
-            eventModalOverlay.classList.add('visible');
-         }
+             document.getElementById('modal-title').textContent = log.name || 'Деталі події';
+             document.getElementById('modal-coords').textContent = `${coordinates[0].toFixed(5)}, ${coordinates[1].toFixed(5)}`;
+             const eventDate = new Date(log.timestamp);
+             document.getElementById('modal-datetime').textContent = eventDate.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
+             document.getElementById('modal-comment').textContent = log.comment || 'Немає';
+             eventModalOverlay.classList.add('visible');
+           }
         function closeEventModal() { 
             eventModalOverlay.classList.remove('visible');
             currentModalLog = null;
@@ -1294,10 +1304,13 @@
                 case 'deepstate-button': button.addEventListener('click', openDeepStateOverlay); break;
                 case 'add-point-button': button.addEventListener('click', () => {
                     populateIconCollectionGrid();
+                    populateMilitaryIconCategories(); // NEW
+                    populateMilitaryIcons('Friendly'); // NEW
                     customPointModal.classList.add('visible');
                 }); break;
                 case 'draw-button': button.addEventListener('click', () => drawingToolbar.style.display = 'flex'); break;
-                 case 'measure-button': button.addEventListener('click', startMeasurement); break;
+                case 'measure-button': button.addEventListener('click', startMeasurement); break;
+                case 'mortar-button': button.addEventListener('click', () => mortarToolbar.style.display = 'flex'); break; // FIXED
                 case 'gps-button': button.addEventListener('click', getGpsLocation); break;
                 case 'upload-button': button.addEventListener('click', () => logFileInput.click()); break;
                 case 'export-button': button.addEventListener('click', exportGeoJson); break;
@@ -1423,6 +1436,17 @@
                     if (!selectedIcon) { alert('Будь ласка, оберіть іконку з колекції.'); return Promise.reject(); }
                     iconPromise = Promise.resolve(L.icon({ iconUrl: selectedIcon.src, iconSize: [32, 32], iconAnchor: [16, 32] }));
                     break;
+                
+                // NEW: Military Icon Case
+                case 'military':
+                    const selectedMilitaryIcon = document.querySelector('.military-icon-item.selected');
+                    if (!selectedMilitaryIcon) { alert('Будь ласка, оберіть військовий значок.'); return Promise.reject(); }
+                    const iconSVG = selectedMilitaryIcon.dataset.svg;
+                    const iconColor = document.getElementById('military-icon-color-picker').value;
+                    const coloredSVG = iconSVG.replace(/currentColor/g, iconColor);
+                    const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(coloredSVG);
+                    iconPromise = Promise.resolve(L.icon({ iconUrl: svgDataUrl, iconSize: [32, 32], iconAnchor: [16, 16] }));
+                    break;
 
                 default: // 'default'
                     iconPromise = Promise.resolve(L.divIcon({ className: 'fa-solid fa-map-pin', iconSize: [24, 24], html: `<i class="fa-solid fa-map-pin" style="font-size: 24px; color: var(--accent-color);"></i>` }));
@@ -1440,7 +1464,7 @@
                 }
             }).catch(error => {
                 console.error("Помилка створення іконки:", error);
-                alert("Не вдалося створити іконку. Перевірте посилання або файл.");
+                if (error) alert("Не вдалося створити іконку. " + error);
             });
         });
         
@@ -1519,45 +1543,44 @@
                     
                     const routingControl = L.Routing.control({
                         waypoints: [firstPoint, secondPoint],
-                        routeWhileDragging: false,
-                        show: false,
-                        addWaypoints: false,
-                        draggableWaypoints: false,
-                        fitSelectedRoutes: true,
-                        lineOptions: {
-                            styles: [{ 
-                                color: document.getElementById('drawing-color-picker').value, 
-                                opacity: 0.8, 
-                                weight: 5 
-                            }]
-                        },
+                        routeWhileDragging: false, show: false, addWaypoints: false, draggableWaypoints: false, fitSelectedRoutes: false,
+                        lineOptions: { styles: [{ color: document.getElementById('drawing-color-picker').value, opacity: 0.8, weight: 5 }] },
                         createMarker: function() { return null; }
                     }).addTo(map);
 
                     routingControl.on('routesfound', function(e) {
-                         const route = e.routes[0];
-                         const routeLine = L.polyline(route.coordinates, {
-                             color: document.getElementById('drawing-color-picker').value,
-                             opacity: 0.8,
-                             weight: 5
-                         }).addTo(measurementLayer);
-                         
-                         const distance = route.summary.totalDistance;
-                         const formattedDist = distance > 1000 ? `${(distance / 1000).toFixed(2)} km` : `${Math.round(distance)} m`;
-                         
-                         const label = L.marker(routeLine.getCenter(), {
+                        const route = e.routes[0];
+                        const routeLine = L.polyline(route.coordinates, {
+                            color: document.getElementById('drawing-color-picker').value, opacity: 0.8, weight: 5
+                        }).addTo(measurementLayer);
+                        
+                        const distance = route.summary.totalDistance;
+                        const formattedDist = distance > 1000 ? `${(distance / 1000).toFixed(2)} km` : `${Math.round(distance)} m`;
+                        
+                        const label = L.marker(routeLine.getCenter(), {
                             icon: L.divIcon({ className: 'distance-label', html: formattedDist })
                         }).addTo(measurementLayer);
 
-                         drawnItemsHistory.push(routeLine, label);
-                         map.removeControl(routingControl);
+                        drawnItemsHistory.push(routeLine, label);
+                        map.removeControl(routingControl);
                     });
                     
                     routingControl.on('routingerror', function(e) {
-                         console.error("Routing error:", e.error);
-                         alert("Не вдалося побудувати маршрут. Спробуйте інші точки.");
-                         map.removeControl(routingControl);
-                     });
+                        console.warn("Routing error, falling back to straight line:", e.error);
+                        const line = L.polyline([firstPoint, secondPoint], {
+                            color: document.getElementById('drawing-color-picker').value, opacity: 0.8, weight: 5, dashArray: '5, 5'
+                        }).addTo(measurementLayer);
+                        
+                        const distance = firstPoint.distanceTo(secondPoint);
+                        const formattedDist = distance > 1000 ? `${(distance / 1000).toFixed(2)} km` : `${Math.round(distance)} m`;
+                        
+                        const label = L.marker(line.getCenter(), {
+                           icon: L.divIcon({ className: 'distance-label', html: `~ ${formattedDist}` })
+                        }).addTo(measurementLayer);
+
+                        drawnItemsHistory.push(line, label);
+                        map.removeControl(routingControl);
+                   });
 
                     map.off('click', clickHandler);
                     map.off('mousemove', moveHandler);
@@ -1682,6 +1705,123 @@
             }
         });
 
+        // --- NEW: Mortar Logic ---
+        document.getElementById('close-mortar-toolbar').addEventListener('click', () => {
+            stopCurrentMapAction();
+            mortarToolbar.style.display = 'none';
+        });
+
+        mortarToolbar.addEventListener('click', (e) => {
+            const button = e.target.closest('.draw-tool-button');
+            if (!button || button.id === 'close-mortar-toolbar') return;
+
+            stopCurrentMapAction();
+            button.classList.add('active');
+
+            const mortarType = button.dataset.mortarType;
+            const ranges = MORTAR_RANGES[mortarType];
+            if (!ranges) return;
+
+            startMortarPlacement(ranges.min, ranges.max, mortarType);
+        });
+
+        function startMortarPlacement(minRange, maxRange, type) {
+            document.getElementById('map').classList.add('map-placement-mode');
+
+            const placeMortar = (pos) => {
+                const rangeGroup = L.layerGroup();
+
+                const minCircle = L.circle(pos, { radius: minRange, color: '#f5a623', weight: 2, dashArray: '5, 5', fillOpacity: 0.1 }).addTo(rangeGroup);
+                const maxCircle = L.circle(pos, { radius: maxRange, color: '#d0021b', weight: 2, fillOpacity: 0.1 }).addTo(rangeGroup);
+                const center = L.marker(pos, { icon: L.divIcon({ className: 'fa-solid fa-bullseye', html: `<i class="fa-solid fa-bullseye" style="color: #d0021b;"></i>`})}).addTo(rangeGroup);
+                
+                center.bindPopup(`<b>Міномет ${type}</b><br>Дальність: ${minRange}м - ${maxRange}м`).openPopup();
+                
+                drawingsLayer.addLayer(rangeGroup);
+                drawnItemsHistory.push(rangeGroup);
+                stopCurrentMapAction();
+            };
+
+            map.once('click', placeMortar);
+
+            currentDrawHandler = {
+                disable: () => {
+                    map.off('click', placeMortar);
+                }
+            };
+        }
+        
+        // --- NEW: Military Icon Data (APP-6 Standard) ---
+        const MILITARY_ICONS = {
+            'Friendly': {
+                'Infantry': '<g transform="translate(100 100) scale(0.8 0.8)"><line x1="-80" y1="80" x2="80" y2="-80" stroke="currentColor" stroke-width="12" /><line x1="80" y1="80" x2="-80" y2="-80" stroke="currentColor" stroke-width="12" /></g>',
+                'Armor': '<g transform="translate(100 100) scale(0.8 0.8)"><ellipse cx="0" cy="0" rx="90" ry="60" stroke="currentColor" stroke-width="12" fill="none"/></g>',
+                'Artillery': '<g transform="translate(100 100) scale(0.8 0.8)"><circle cx="0" cy="0" r="20" fill="currentColor"/></g>',
+                'Observation Post': '<g transform="translate(100 100) scale(0.8 0.8)"><line x1="0" y1="-80" x2="0" y2="80" stroke="currentColor" stroke-width="12" /><line x1="-80" y1="0" x2="-20" y2="0" stroke="currentColor" stroke-width="12" /><line x1="-80" y1="0" x2="-50" y2="-30" stroke="currentColor" stroke-width="12" /></g>'
+            },
+            'Hostile': {
+                'Infantry': '<g transform="translate(100 100) scale(0.8 0.8)"><line x1="-80" y1="80" x2="80" y2="-80" stroke="currentColor" stroke-width="12" /><line x1="80" y1="80" x2="-80" y2="-80" stroke="currentColor" stroke-width="12" /></g>',
+                'Armor': '<g transform="translate(100 100) scale(0.8 0.8)"><ellipse cx="0" cy="0" rx="90" ry="60" stroke="currentColor" stroke-width="12" fill="none"/></g>',
+                'Artillery': '<g transform="translate(100 100) scale(0.8 0.8)"><circle cx="0" cy="0" r="20" fill="currentColor"/></g>',
+                 'Mortar': '<g transform="translate(100 100) scale(0.8 0.8)"><circle cx="0" cy="0" r="20" fill="currentColor"/><line x1="0" y1="20" x2="0" y2="70" stroke="currentColor" stroke-width="12"/><path d="M 0 70 L 20 90" stroke="currentColor" stroke-width="12" fill="none"/></g>'
+            },
+            'Neutral': {
+                'Infantry': '<g transform="translate(100 100) scale(0.8 0.8)"><line x1="-80" y1="80" x2="80" y2="-80" stroke="currentColor" stroke-width="12" /><line x1="80" y1="80" x2="-80" y2="-80" stroke="currentColor" stroke-width="12" /></g>',
+            },
+            'Unknown': {
+                'Unit': '<g transform="translate(100 100) scale(0.8 0.8)"></g>',
+            }
+        };
+
+        function getMilitaryFrame(category) {
+            switch (category) {
+                case 'Friendly': return '<rect x="5" y="5" width="190" height="123.3" rx="10" ry="10" stroke="currentColor" stroke-width="10" fill="none" />';
+                case 'Hostile': return '<path d="M 5,66.65 L 100,5 L 195,66.65 L 100,128.3 Z" stroke="currentColor" stroke-width="10" fill="none" />';
+                case 'Neutral': return '<rect x="5" y="5" width="190" height="123.3" stroke="currentColor" stroke-width="10" fill="none" />';
+                case 'Unknown': return '<path d="M 5,66.65 C 5,5 195,5 195,66.65 S 5,128.3 5,66.65 Z" stroke="currentColor" stroke-width="10" fill="none"/>';
+                default: return '';
+            }
+        }
+
+        function populateMilitaryIconCategories() {
+            const container = document.getElementById('military-icon-categories');
+            container.innerHTML = '';
+            Object.keys(MILITARY_ICONS).forEach(category => {
+                const button = document.createElement('button');
+                button.className = 'category-button';
+                button.textContent = category === 'Friendly' ? 'Дружні' : category === 'Hostile' ? 'Ворожі' : category === 'Neutral' ? 'Нейтральні' : 'Невідомі';
+                button.dataset.category = category;
+                if (category === 'Friendly') button.classList.add('active');
+                container.appendChild(button);
+            });
+            container.addEventListener('click', (e) => {
+                if (e.target.matches('.category-button')) {
+                    document.querySelectorAll('.category-button.active').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    populateMilitaryIcons(e.target.dataset.category);
+                }
+            });
+        }
+        
+        function populateMilitaryIcons(category) {
+            const grid = document.getElementById('military-icon-grid');
+            grid.innerHTML = '';
+            const frame = getMilitaryFrame(category);
+            const icons = MILITARY_ICONS[category];
+            for (const name in icons) {
+                const svgContent = `<svg viewBox="0 0 200 133.3">${frame}${icons[name]}</svg>`;
+                const img = document.createElement('img');
+                img.src = 'data:image/svg+xml;base64,' + btoa(svgContent.replace(/currentColor/g, 'black'));
+                img.className = 'military-icon-item';
+                img.title = name;
+                img.dataset.svg = svgContent;
+                img.onclick = () => {
+                    document.querySelectorAll('.military-icon-item.selected').forEach(el => el.classList.remove('selected'));
+                    img.classList.add('selected');
+                };
+                grid.appendChild(img);
+            }
+        }
 
         // --- APPLICATION STARTUP ---
         window.addEventListener('load', () => {
@@ -1704,4 +1844,3 @@
     </script>
 </body>
 </html>
-
