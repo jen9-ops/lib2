@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Карта - Аналітична панель</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro@2.9.6/build/vanilla-calendar.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Apple PWA tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Карта-панель">
+
+
+    <style>
+        /* --- THEME VARIABLES --- */
+        :root {
+            --bg-color: rgba(255, 255, 255, 0.85);
+            --blur-effect: backdrop-filter: blur(12px);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --text-color: #2c2c2c;
+            --accent-color: #007aff;
+            --transition-speed: 0.3s;
+            --main-bg: #eef1f4;
+            --icon-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+
+        body.dark-theme {
+            --bg-color: rgba(28, 28, 30, 0.85);
+            --border-color: rgba(255, 255, 255, 0.15);
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --text-color: #f5f5f7;
+            --main-bg: #1c1c1e;
+            --icon-shadow: 0 1px 4px rgba(0,0,0,0.7);
+        }
+        
+        /* --- GLOBAL STYLES --- */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            background-color: var(--main-bg);
+            overflow: hidden;
+            position: fixed; /* Prevents pull-to-refresh on mobile */
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- UI CONTROLS (BUTTONS, PANELS) --- */
+
+        .ui-element {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px var(--shadow-color);
+            border-radius: 12px;
+            -webkit-backdrop-filter: var(--blur-effect);
+            backdrop-filter: var(--blur-effect);
+            transition: all var(--transition-speed);
+        }
+
+        #panel-toggle-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1001;
+        }
+
+        #panel-toggle-button {
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text-color);
+            background: transparent;
+            border: none;
+            text-shadow: var(--icon-shadow);
+            transition: all var(--transition-speed);
+        }
+
+        #panel-toggle-button:hover {
+            transform: scale(1.1);
+            color: var(--accent-color);
+        }
+
+        #action-buttons {
+            /* This is now a non-visual container */
+        }
+        
+        .action-button {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            font-size: 20px;
+            cursor: grab;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: color 0.2s, transform 0.2s;
+            text-shadow: var(--icon-shadow);
+            z-index: 1001;
+        }
+        
+        .action-button.grabbing {
+            cursor: grabbing;
+            z-index: 1002;
+        }
+
+        .action-button:hover {
+            color: var(--accent-color);
+            transform: scale(1.1);
+        }
+
+        #sync-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: #ff3b30;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform: translate(40%, -40%);
+            display: none;
+            border: 2px solid var(--main-bg);
+            text-shadow: none;
+        }
+
+        /* --- ANALYTICS PANEL --- */
+        #top-panel {
+            position: absolute;
+            top: 65px;
+            left: 10px;
+            width: calc(100% - 20px);
+            max-width: 1200px;
+            z-index: 1000;
+            transition: opacity var(--transition-speed), transform var(--transition-speed), visibility var(--transition-speed);
+            transform-origin: top left;
+        }
+
+        #top-panel.collapsed {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px) scale(0.95);
+        }
+
+        .panel-header {
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .panel-header h2 { margin: 0; font-size: 18px; color: var(--text-color); }
+        body.dark-theme .panel-header h2 { color: var(--text-color); }
+
+
+        .panel-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            max-height: calc(100vh - 160px);
+            overflow-y: auto;
+        }
+        
+        .panel-column {
+            padding: 0 10px;
+            display: flex;
+            flex-direction: column;
+            min-width: 280px;
+            flex: 1;
+        }
+        .panel-column h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            font-weight: 600;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-color);
+        }
+        body.dark-theme .panel-column h3 { color: var(--text-color); }
+
+        #events-column { flex-basis: 35%; }
+        #layers-column { flex-basis: 25%; }
+        #calendar-column { flex-basis: 300px; flex-grow: 0; }
+
+        /* --- EVENTS AND LAYERS LIST --- */
+        #events-list { list-style: none; padding: 0; margin: 0; }
+        #events-list li { padding: 10px 8px; font-size: 14px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; color: var(--text-color); }
+        body.dark-theme #events-list li { color: var(--text-color); }
+        #events-list li:hover, #events-list li.highlighted { background-color: rgba(0, 122, 255, 0.1); }
+        .layer-legend-color { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 3px; vertical-align: middle;}
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.visible {
+            opacity: 1; visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--bg-color);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 25px var(--shadow-color);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            -webkit-backdrop-filter: var(--blur-effect);
+            backdrop-filter: var(--blur-effect);
+        }
+        
+        .modal-content h3 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+        body.dark-theme .modal-content h3 { color: var(--text-color); }
+
+
+        .modal-close {
+            position: absolute;
+            top: 10px; right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .modal-close:hover { opacity: 1; }
+        
+        #modal-info p { margin: 8px 0; color: var(--text-color); }
+        body.dark-theme #modal-info p { color: var(--text-color); }
+        #modal-info p strong { color: #555; }
+        body.dark-theme #modal-info p strong { color: #aaa; }
+        #modal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+        #modal-actions button {
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        #modal-actions button:hover {
+            background-color: #0056b3;
+        }
+
+        /* --- DRAWING & CUSTOM POINT MODAL STYLES --- */
+        #drawing-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .draw-option-button {
+            background-color: rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: background-color 0.2s, transform 0.2s;
+            text-align: center;
+        }
+        .draw-option-button:hover {
+            background-color: rgba(0, 122, 255, 0.1);
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+        .draw-option-button i {
+            font-size: 24px;
+            color: var(--accent-color);
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+        .form-group input[type="text"], .form-group input[type="file"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-color);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .source-toggle, .background-processing-toggle {
+            display: flex;
+            gap: 15px;
+            justify-content: space-around;
+            background-color: rgba(0,0,0,0.05);
+            padding: 8px;
+            border-radius: 6px;
+        }
+        #place-point-submit {
+            width: 100%; padding: 12px; font-size: 16px; font-weight: 600; border: none;
+            background: var(--accent-color); color: white; border-radius: 8px; cursor: pointer;
+            margin-top: 15px; transition: background-color 0.2s;
+        }
+        #place-point-submit:hover { background-color: #0056b3; }
+        .color-picker-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; padding: 10px; background-color: rgba(0,0,0,0.05); border-radius: 8px; }
+        .color-picker-container label { font-weight: 500; }
+        #drawing-color-picker, #circle-bg-color-picker { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 40px; height: 40px; background-color: transparent; border: none; cursor: pointer; }
+        #drawing-color-picker::-webkit-color-swatch, #circle-bg-color-picker::-webkit-color-swatch { border-radius: 50%; border: 2px solid rgba(0,0,0,0.2); }
+        #drawing-color-picker::-moz-color-swatch, #circle-bg-color-picker::-moz-color-swatch { border-radius: 50%; border: 2px solid rgba(0,0,0,0.2); }
+
+        /* --- Iframe Overlay Fullscreen --- */
+        .iframe-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #fff; /* Fallback background */
+        }
+        #deepstate-iframe, #leaflet-overlay-map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        #leaflet-overlay-map {
+            z-index: 2;
+            background: transparent;
+            pointer-events: none;
+        }
+
+        .iframe-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 3; /* Must be on top of everything */
+            display: flex;
+            gap: 10px;
+        }
+        .iframe-button {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            border-radius: 8px;
+            -webkit-backdrop-filter: var(--blur-effect);
+            backdrop-filter: var(--blur-effect);
+            color: var(--text-color);
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .iframe-button:hover {
+            background-color: var(--accent-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+        .iframe-button i {
+            font-size: 16px;
+        }
+
+        /* --- OTHER STYLES --- */
+        #loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 3000; display: flex; justify-content: center; align-items: center; }
+        .loader { border: 8px solid #f3f3f3; border-radius: 50%; border-top: 8px solid var(--accent-color); width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .map-placement-mode { cursor: crosshair !important; }
+
+        .intersection-icon { font-size: 24px !important; color: #d92f2f; text-shadow: 0 0 3px rgba(0,0,0,0.5); }
+        
+        /* --- CALENDAR STYLES --- */
+        .vanilla-calendar {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            width: 100% !important;
+        }
+        .vanilla-calendar-month, .vanilla-calendar-year, .vanilla-calendar-week__day {
+            color: var(--text-color) !important;
+        }
+        .vanilla-calendar-arrow {
+            color: var(--text-color) !important;
+            background: rgba(128,128,128,0.1) !important;
+        }
+        body.dark-theme .vanilla-calendar-arrow {
+             background: rgba(255,255,255,0.1) !important;
+        }
+        .vanilla-calendar-day__btn { color: var(--text-color); }
+        
+        /* --- LEAFLET OVERRIDES --- */
+        .leaflet-control-zoom {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out {
+            background: transparent !important;
+            color: var(--text-color) !important;
+            border: none !important;
+            box-shadow: none !important;
+            width: 36px !important;
+            height: 36px !important;
+            line-height: 36px !important;
+            font-size: 22px !important;
+            text-shadow: var(--icon-shadow) !important;
+        }
+         .leaflet-control-zoom a:hover {
+            background-color: transparent !important;
+        }
+
+        .leaflet-control-layers-toggle {
+             width: 36px !important;
+            height: 36px !important;
+            background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232c2c2c"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important;
+            filter: drop-shadow(var(--icon-shadow));
+        }
+        .leaflet-control-layers {
+            border: 1px solid var(--border-color) !important;
+            background: var(--bg-color) !important;
+            -webkit-backdrop-filter: var(--blur-effect);
+            backdrop-filter: var(--blur-effect);
+            box-shadow: 0 2px 10px var(--shadow-color) !important;
+            color: var(--text-color) !important;
+        }
+        body.dark-theme .leaflet-control-layers {
+            color: var(--text-color);
+        }
+        body.dark-theme .leaflet-control-layers-toggle {
+             background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f5f5f7"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important;
+        }
+
+
+        #layers-container .leaflet-control-layers { border: none !important; box-shadow: none !important; background: transparent !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+        
+        /* --- RESPONSIVENESS --- */
+        @media (max-width: 768px) {
+            .panel-content {
+                flex-direction: column;
+                max-height: calc(100vh - 150px); /* Adjust height for mobile */
+            }
+            .panel-column {
+                min-width: unset;
+                flex-basis: auto !important;
+            }
+            .modal-content {
+                width: 95%;
+            }
+            #action-buttons, #panel-toggle-container {
+                padding: 4px;
+            }
+            .action-button, #panel-toggle-button {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        
+        @media (max-height: 500px) and (orientation: landscape) {
+             .panel-content {
+                max-height: calc(100vh - 100px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div id="panel-toggle-container">
+        <button id="panel-toggle-button" title="Аналітична панель">
+            <i class="fa-solid fa-sliders"></i>
+        </button>
+    </div>
+
+    <div id="action-buttons">
+        <button id="theme-toggle-button" class="action-button" title="Змінити тему"><i class="fa-solid fa-moon"></i></button>
+        <button id="sync-button" class="action-button" title="Синхронізувати з Google Sheet"><i class="fa-solid fa-sync"></i><span id="sync-badge"></span></button>
+        <button id="deepstate-button" class="action-button" title="Наложение на DeepState Map"><i class="fa-solid fa-layer-group"></i></button>
+        <button id="add-point-button" class="action-button" title="Додати власну точку"><i class="fa-solid fa-map-pin"></i></button>
+        <button id="draw-button" class="action-button" title="Інструменти малювання"><i class="fa-solid fa-pencil-ruler"></i></button>
+        <button id="gps-button" class="action-button" title="Знайти моє місцеположення"><i class="fa-solid fa-location-crosshairs"></i></button>
+        <button id="upload-button" class="action-button" title="Завантажити логи"><i class="fa-solid fa-upload"></i></button>
+        <button id="export-button" class="action-button" title="Експорт (GeoJSON)"><i class="fa-solid fa-file-export"></i></button>
+        <button id="install-button" class="action-button" title="Встановити додаток" style="display: none;"><i class="fa-solid fa-download"></i></button>
+    </div>
+
+    <div id="top-panel" class="ui-element collapsed">
+        <div class="panel-header">
+            <h2>Аналітична панель</h2>
+        </div>
+        <div class="panel-content">
+            <div class="panel-column" id="calendar-column"><h3>Календар</h3><div id="calendar-container"></div></div>
+            <div class="panel-column" id="events-column"><h3 id="events-list-title">Події</h3><ul id="events-list"></ul></div>
+            <div class="panel-column" id="layers-column"><h3>Шари карти</h3><div id="layers-container"></div></div>
+        </div>
+    </div>
+    
+    <div id="iframe-overlay" class="modal-overlay">
+        <div class="iframe-container">
+             <div class="iframe-controls">
+                <button id="transfer-coords-button" class="iframe-button" title="Перенести координати з центру екрана"><i class="fa-solid fa-crosshairs"></i> Перенести</button>
+                <button id="iframe-close-button" class="iframe-button" title="Закрити"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <iframe id="deepstate-iframe" src="https://deepstatemap.live" frameborder="0"></iframe>
+            <div id="leaflet-overlay-map"></div>
+        </div>
+    </div>
+    
+    <input type="file" id="log-file-input" multiple accept=".json" style="display: none;">
+    <div id="loader-overlay" class="hidden" style="display:none;"><div class="loader"></div></div>
+
+    <!-- Modals -->
+    <div id="event-modal-overlay" class="modal-overlay">
+        <div id="event-modal-content" class="modal-content">
+            <button id="modal-close-button" class="modal-close">&times;</button>
+            <h3 id="modal-title">Деталі події</h3>
+            <div id="modal-info">
+                <p><strong>Координати:</strong> <span id="modal-coords"></span></p>
+                <p><strong>Час події:</strong> <span id="modal-datetime"></span></p>
+                <p><strong>Коментар:</strong> <span id="modal-comment"></span></p>
+            </div>
+            <div id="modal-actions">
+                <button id="modal-draw-arrow">Намалювати стрілку</button>
+                <button id="modal-draw-line">Намалювати лінію</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="drawing-modal-overlay" class="modal-overlay">
+        <div id="drawing-modal-content" class="modal-content" style="max-width: 600px;">
+            <button id="drawing-modal-close-button" class="modal-close">&times;</button>
+            <h3>Інструменти малювання</h3>
+            <p style="text-align: center; margin-top: -10px; opacity: 0.7;">Оберіть інструмент, колір, а потім клацніть на карті для малювання.</p>
+            <div class="color-picker-container">
+                <label for="drawing-color-picker">Колір:</label>
+                <input type="color" id="drawing-color-picker" value="#ff4747">
+            </div>
+            <div id="drawing-options">
+                <button class="draw-option-button" data-draw-type="arrow"><i class="fa-solid fa-arrow-right"></i><span>Стрілка</span></button>
+                <button class="draw-option-button" data-draw-type="repeating-arrow"><i class="fa-solid fa-angles-right"></i><span>Повтор. стрілки</span></button>
+                <button class="draw-option-button" data-draw-type="animated-arrow"><i class="fa-solid fa-play"></i><span>Анімована стрілка</span></button>
+                <button class="draw-option-button" data-draw-type="flexible-line"><i class="fa-solid fa-wave-square"></i><span>Вигнута лінія</span></button>
+                <button class="draw-option-button" data-draw-type="dashed-line"><i class="fa-solid fa-grip-lines"></i><span>Пунктир</span></button>
+                <button class="draw-option-button" data-draw-type="animated-ants"><i class="fa-solid fa-person-running"></i><span>Анімований пунктир</span></button>
+                <button class="draw-option-button" data-draw-type="icon-line"><i class="fa-solid fa-location-dot"></i><span>Лінія з іконками</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-point-modal-overlay" class="modal-overlay">
+        <div id="custom-point-modal-content" class="modal-content" style="max-width: 450px;">
+            <button id="custom-point-modal-close-button" class="modal-close">&times;</button>
+            <h3>Параметри точки</h3>
+            <div class="form-group">
+                <label for="point-name-input">Назва:</label>
+                <input type="text" id="point-name-input" placeholder="Наприклад, 'Позиція 1'">
+            </div>
+            <div class="form-group">
+                <label>Іконка:</label>
+                <div class="source-toggle">
+                    <label><input type="radio" name="point-icon-source" value="default" checked> Стандартна</label>
+                    <label><input type="radio" name="point-icon-source" value="url"> URL</label>
+                    <label><input type="radio" name="point-icon-source" value="file"> Файл</label>
+                </div>
+            </div>
+            <div id="point-url-source-group" class="form-group" style="display: none;">
+                <label for="point-url-input">Посилання на іконку:</label>
+                <input type="text" id="point-url-input" placeholder="https://example.com/icon.png">
+            </div>
+            <div id="point-file-source-group" class="form-group" style="display: none;">
+                <label for="point-file-input">Завантажити файл (PNG, JPG, SVG):</label>
+                <input type="file" id="point-file-input" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>Обробка фону іконки:</label>
+                <div class="background-processing-toggle">
+                    <label><input type="radio" name="icon-background-processing" value="none" checked> Без змін</label>
+                    <label><input type="radio" name="icon-background-processing" value="circle-bg"> Круглий фон</label>
+                    <label><input type="radio" name="icon-background-processing" value="white-to-transparent"> Білий в прозорий</label>
+                </div>
+                <div id="circle-bg-color-group" class="form-group" style="display: none; margin-top: 10px;">
+                    <label for="circle-bg-color-picker">Колір фону:</label>
+                    <input type="color" id="circle-bg-color-picker" value="#ffffff">
+                </div>
+            </div>
+            <button id="place-point-submit">Розмістити на карті</button>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro@2.9.6/build/vanilla-calendar.min.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <script>
+        // --- Full application JavaScript ---
+
+        // --- Global constants and variables ---
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWLzQoJq0hfHer7Vsdk2xJe_Z7aNA4SRhiU0NWkMPv3IZAdcMFkyH-GrkXm6WK5SEZ/exec';
+        let allLogsData = [], calendar, mapLayersControl, fileLayerGroups = {}, intersectionClusterGroup, selectedCalendarDate = null;
+        let mapFeatures = {};
+        let lastSyncRowCount = 0;
+        let deferredPrompt;
+
+        // --- Map and layers initialization ---
+        const map = L.map('map', { zoomControl: false }).setView([50.41, 30.64], 11);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        const baseLayers = {
+            "Стандартна": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }),
+            "Супутник": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '&copy; Esri' }),
+        };
+        baseLayers["Стандартна"].addTo(map);
+
+        // --- Feature Layers ---
+        let customPointsLayer = L.layerGroup().addTo(map);
+        let drawingsLayer = L.layerGroup().addTo(map);
+
+        // --- DOM Element References ---
+        const loader = document.getElementById('loader-overlay');
+        const logFileInput = document.getElementById('log-file-input');
+        const iframeOverlay = document.getElementById('iframe-overlay');
+        const iframeCloseButton = document.getElementById('iframe-close-button');
+        const panelToggleButton = document.getElementById('panel-toggle-button');
+        const topPanel = document.getElementById('top-panel');
+        const themeToggleButton = document.getElementById('theme-toggle-button');
+        const themeIcon = themeToggleButton.querySelector('i');
+        const actionButtonsContainer = document.getElementById('action-buttons');
+        let overlayMap = null;
+        let overlayLayersGroup = L.layerGroup();
+        
+        // --- PWA INSTALL LOGIC ---
+        const installButton = document.getElementById('install-button');
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'flex';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to the install prompt: ${outcome}`);
+                deferredPrompt = null;
+                installButton.style.display = 'none';
+            }
+        });
+        
+        window.addEventListener('appinstalled', () => {
+             deferredPrompt = null;
+             installButton.style.display = 'none';
+             console.log('PWA was installed');
+        });
+
+        // --- THEME & UI LOGIC ---
+        const toggleTheme = (forceTheme = null) => {
+            const body = document.body;
+            let isDark;
+
+            if (forceTheme) {
+                isDark = forceTheme === 'dark';
+            } else {
+                isDark = !body.classList.contains('dark-theme');
+            }
+
+            body.classList.toggle('dark-theme', isDark);
+            themeIcon.classList.toggle('fa-sun', isDark);
+            themeIcon.classList.toggle('fa-moon', !isDark);
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+            if (isDark) {
+                if (map.hasLayer(baseLayers["Стандартна"])) {
+                    map.removeLayer(baseLayers["Стандартна"]);
+                }
+                map.addLayer(baseLayers["Супутник"]);
+            } else {
+                if (map.hasLayer(baseLayers["Супутник"])) {
+                    map.removeLayer(baseLayers["Супутник"]);
+                }
+                map.addLayer(baseLayers["Стандартна"]);
+            }
+        };
+
+        themeToggleButton.addEventListener('click', () => toggleTheme());
+        
+        panelToggleButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            topPanel.classList.toggle('collapsed');
+        });
+
+        document.addEventListener('click', (e) => {
+            const isClickInsidePanel = e.target.closest('#top-panel');
+            const isClickOnToggleButton = e.target.closest('#panel-toggle-button');
+            if (!topPanel.classList.contains('collapsed') && !isClickInsidePanel && !isClickOnToggleButton) {
+                topPanel.classList.add('collapsed');
+            }
+        });
+        
+        iframeCloseButton.addEventListener('click', () => {
+            iframeOverlay.classList.remove('visible');
+        });
+        
+        // --- DRAGGABLE BUTTONS LOGIC ---
+        function makeDraggable(element) {
+            let isDragging = false;
+            let wasDragged = false;
+            let offsetX, offsetY;
+            let startX, startY;
+            const clickThreshold = 5;
+
+            function onDown(e) {
+                if (e.button === 2) return;
+
+                isDragging = true;
+                wasDragged = false;
+                element.classList.add('grabbing');
+                
+                const touch = e.type === 'touchstart';
+                const event = touch ? e.touches[0] : e;
+                
+                startX = event.clientX;
+                startY = event.clientY;
+                
+                const rect = element.getBoundingClientRect();
+                offsetX = event.clientX - rect.left;
+                offsetY = event.clientY - rect.top;
+                
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('touchmove', onMove, { passive: false });
+                window.addEventListener('mouseup', onUp);
+                window.addEventListener('touchend', onUp);
+            }
+
+            function onMove(e) {
+                if (!isDragging) return;
+                if (e.cancelable) e.preventDefault();
+                
+                const touch = e.type === 'touchmove';
+                const event = touch ? e.touches[0] : e;
+                
+                if (!wasDragged && (Math.abs(event.clientX - startX) > clickThreshold || Math.abs(event.clientY - startY) > clickThreshold)) {
+                    wasDragged = true;
+                }
+
+                let newLeft = event.clientX - offsetX;
+                let newTop = event.clientY - offsetY;
+
+                const rect = element.getBoundingClientRect();
+                const parentRect = document.body.getBoundingClientRect();
+                
+                newLeft = Math.max(0, Math.min(newLeft, parentRect.width - rect.width));
+                newTop = Math.max(0, Math.min(newTop, parentRect.height - rect.height));
+
+                element.style.left = `${newLeft}px`;
+                element.style.top = `${newTop}px`;
+                element.style.right = 'auto';
+            }
+
+            function onUp() {
+                isDragging = false;
+                element.classList.remove('grabbing');
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('touchmove', onMove);
+                window.removeEventListener('mouseup', onUp);
+                window.removeEventListener('touchend', onUp);
+                
+                setTimeout(() => {
+                    wasDragged = false;
+                }, 0);
+            }
+            
+            element.addEventListener('click', (e) => {
+                if (wasDragged) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }, true);
+
+            element.addEventListener('mousedown', onDown);
+            element.addEventListener('touchstart', onDown, { passive: false });
+        }
+        
+        // --- DATA HANDLING (GOOGLE SHEETS, FILES) ---
+        
+        document.getElementById('sync-button').addEventListener('click', () => fetchDataFromSheet(false));
+        document.getElementById('upload-button').addEventListener('click', () => logFileInput.click());
+        logFileInput.addEventListener('change', handleFileSelect);
+
+        async function fetchDataFromSheet(isSilent = false) {
+            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
+                if (!isSilent) console.error('Error: Google Apps Script URL not specified.');
+                return;
+            }
+            if (!isSilent) loader.style.display = 'flex';
+            
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                if (!response.ok) throw new Error(`Network response was not ok: ${response.statusText}`);
+                const sheetData = await response.json();
+                
+                if (isSilent) {
+                    const newRowCount = sheetData.length;
+                    const newEventsCount = newRowCount - (lastSyncRowCount || 0);
+                    const syncBadge = document.getElementById('sync-badge');
+                    if (newEventsCount > 0) {
+                        syncBadge.textContent = newEventsCount;
+                        syncBadge.style.display = 'flex';
+                    } else {
+                        syncBadge.style.display = 'none';
+                    }
+                    return;
+                }
+
+                lastSyncRowCount = sheetData.length;
+                document.getElementById('sync-badge').style.display = 'none';
+
+                const formattedData = sheetData.map((row, index) => ({
+                    name: row.Event, timestamp: row.Timestamp, azimuth: row.Azimuth,
+                    distance: row.Distance ? parseInt(row.Distance, 10) : null,
+                    comment: row.Comment, uniqueId: row.UniqueID || `sheet_${index}`,
+                    originCoordinates: { lat: parseFloat(row.Latitude), lon: parseFloat(row.Longitude) },
+                    fileName: `Sheet: ${row.Shift} | ${row.Position}`,
+                    fileColor: generateHslColor(index, sheetData.length)
+                }));
+                
+                const validData = formattedData.filter(log => !isNaN(log.originCoordinates.lat) && !isNaN(log.originCoordinates.lon));
+
+                if (validData.length < formattedData.length && !isSilent) {
+                    console.warn(`Warning: ${formattedData.length - validData.length} records from the sheet were ignored due to invalid coordinates.`);
+                }
+                
+                allLogsData = validData;
+                initCalendar();
+                updateMap();
+                displayEventsList(allLogsData, null);
+                
+            } catch (error) {
+                if (!isSilent) console.error('Failed to load data from Google Sheet.');
+                console.error('Fetch error:', error);
+            } finally {
+                if (!isSilent) loader.style.display = 'none';
+            }
+        }
+        
+        function handleFileSelect(event) {
+            loader.style.display = 'flex';
+            if (mapLayersControl) { map.removeControl(mapLayersControl); mapLayersControl = null; }
+            Object.values(fileLayerGroups).forEach(group => group.clearLayers());
+            if (intersectionClusterGroup) { intersectionClusterGroup.clearLayers(); map.removeLayer(intersectionClusterGroup); }
+            allLogsData = []; fileLayerGroups = {}; mapFeatures = {};
+            let logIdCounter = 0;
+            const files = Array.from(event.target.files);
+            const promises = files.map((file, index) => new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        let processedLogs = [];
+                        if (data.events && data.position && data.position.location) {
+                            const originCoordinates = { lat: data.position.location.lat, lon: data.position.location.lon };
+                            data.events.forEach(event => { processedLogs.push({ ...event, distance: event.distance ? parseInt(event.distance, 10) : null, uniqueId: `log_${logIdCounter++}`, originCoordinates: originCoordinates, fileName: file.name, fileColor: generateHslColor(index, files.length) }); });
+                        } else if (data.logs && data.originCoordinates) {
+                            data.logs.forEach(log => { log.uniqueId = `log_${logIdCounter++}`; log.originCoordinates = data.originCoordinates; log.fileName = file.name; log.fileColor = generateHslColor(index, files.length); processedLogs.push(log); });
+                        } else { console.warn(`File ${file.name} has an unknown format.`); }
+                        allLogsData.push(...processedLogs);
+                    } catch (error) { console.error(`Error parsing file ${file.name}.`); }
+                    resolve();
+                };
+                reader.readAsText(file);
+            }));
+            Promise.all(promises).then(() => {
+                initCalendar(); updateMap(); displayEventsList(allLogsData, null);
+                topPanel.classList.remove('collapsed');
+                loader.style.display = 'none';
+            });
+        }
+
+        // --- MAP & PANEL DISPLAY LOGIC ---
+
+        function updateMap() {
+            if (mapLayersControl) { map.removeControl(mapLayersControl); mapLayersControl = null; }
+            Object.values(fileLayerGroups).forEach(group => { if(map.hasLayer(group)) map.removeLayer(group); });
+            if (intersectionClusterGroup) { intersectionClusterGroup.clearLayers(); if(map.hasLayer(intersectionClusterGroup)) map.removeLayer(intersectionClusterGroup); }
+            fileLayerGroups = {}; mapFeatures = {};
+            let filteredLogs = allLogsData.filter(log => !selectedCalendarDate || log.timestamp.startsWith(selectedCalendarDate));
+            drawLogVisuals(filteredLogs);
+            calculateAndDrawIntersections(filterForIntersection(filteredLogs));
+        }
+        
+        function drawLogVisuals(logsToDraw) {
+            const overlayMaps = {};
+            const logsByFile = logsToDraw.reduce((acc, log) => {
+                if (!acc[log.fileName]) acc[log.fileName] = [];
+                acc[log.fileName].push(log);
+                return acc;
+            }, {});
+
+            for (const fileName in logsByFile) {
+                const logs = logsByFile[fileName];
+                if (logs.length === 0) continue;
+                const fileColor = logs[0].fileColor;
+                const fileGroup = L.layerGroup();
+                const originsDrawn = new Set();
+                logs.forEach(log => {
+                    const origin = log.originCoordinates;
+                    const originKey = `${origin.lat},${origin.lon}`;
+                    if (!originsDrawn.has(originKey)) {
+                        L.marker([origin.lat, origin.lon], { icon: L.divIcon({ className: 'fa-solid fa-user-secret', iconSize: [20, 20], html: `<i class="fa-solid fa-user-secret" style="color: ${fileColor}; font-size: 20px;"></i>` }) }).addTo(fileGroup).bindPopup(`<b>Спостерігач</b><br>${fileName}`);
+                        originsDrawn.add(originKey);
+                    }
+                    if (log.azimuth && log.distance) drawObservation(log, fileGroup);
+                });
+                fileLayerGroups[fileName] = fileGroup;
+                overlayMaps[`<span class="layer-legend-color" style="background-color:${fileColor};"></span> ${fileName.substring(0, 25)}...`] = fileGroup;
+            }
+
+            if (intersectionClusterGroup && intersectionClusterGroup.getLayers().length > 0) {
+                overlayMaps[`<i class="fa-solid fa-crosshairs" style="color:#d92f2f;"></i> Перетини`] = intersectionClusterGroup;
+            }
+            overlayMaps[`<i class="fa-solid fa-map-pin" style="color:var(--accent-color);"></i> Мої точки`] = customPointsLayer;
+            overlayMaps[`<i class="fa-solid fa-pencil" style="color:#f5a623;"></i> Малюнки`] = drawingsLayer;
+
+            mapLayersControl = L.control.layers(null, overlayMaps, { collapsed: true });
+            mapLayersControl.addTo(map);
+
+            const layersContainer = document.getElementById('layers-container');
+            layersContainer.innerHTML = '';
+            const list = document.createElement('ul');
+            list.style.cssText = 'list-style: none; padding: 0; margin: 0;';
+            Object.keys(overlayMaps).forEach(layerName => {
+                const li = document.createElement('li');
+                li.innerHTML = layerName;
+                li.style.padding = '5px 0';
+                list.appendChild(li);
+            });
+            layersContainer.appendChild(list);
+            
+            Object.values(fileLayerGroups).forEach(group => map.addLayer(group));
+            if (intersectionClusterGroup) map.addLayer(intersectionClusterGroup);
+        }
+        
+        function drawObservation(log, layerGroup, isOverlay = false) {
+            const originPoint = [log.originCoordinates.lat, log.originCoordinates.lon];
+            const averageAzimuth = (parseAzimuth(log.azimuth)[0] + parseAzimuth(log.azimuth)[1]) / 2;
+            const targetPoint = getDestPoint(originPoint[0], originPoint[1], averageAzimuth, log.distance);
+            
+            const polyline = L.polyline([originPoint, targetPoint], { color: log.fileColor, weight: 3, opacity: 0.9 }).addTo(layerGroup);
+            const marker = L.circle(targetPoint, { color: log.fileColor, fillColor: log.fileColor, fillOpacity: 0.4, radius: 25 }).addTo(layerGroup);
+
+            if (!isOverlay) {
+                marker.on('click', () => openEventModal(log, targetPoint));
+                mapFeatures[log.uniqueId] = { marker, polyline };
+            }
+        }
+
+        function calculateAndDrawIntersections(logs) {
+            intersectionClusterGroup = L.markerClusterGroup();
+            for (let i = 0; i < logs.length; i++) {
+                for (let j = i + 1; j < logs.length; j++) {
+                    const logA = logs[i], logB = logs[j];
+                    if (logA.fileName === logB.fileName) continue;
+                    const iPoint = findIntersection(logA, logB);
+                    if (iPoint) {
+                        const distA = calculateDistance(logA.originCoordinates.lat, logA.originCoordinates.lon, iPoint[0], iPoint[1]);
+                        const distB = calculateDistance(logB.originCoordinates.lat, logB.originCoordinates.lon, iPoint[0], iPoint[1]);
+                        const popup = `<b>Перетин</b><br><b>Коорд:</b> ${iPoint[0].toFixed(5)}, ${iPoint[1].toFixed(5)}<hr><b>Файл 1:</b> ${logA.fileName}<br><b>Дист:</b> ${Math.round(distA)} м<br><hr><b>Файл 2:</b> ${logB.fileName}<br><b>Дист:</b> ${Math.round(distB)} м`;
+                        const marker = L.marker(iPoint, { icon: L.divIcon({ className: 'fa-solid fa-crosshairs intersection-icon', iconSize: [24, 24] }) }).bindPopup(popup);
+                        intersectionClusterGroup.addLayer(marker);
+                    }
+                }
+            }
+        }
+
+        function initCalendar() {
+            const eventDates = [...new Set(allLogsData.map(log => log.timestamp.substring(0, 10)))];
+            const options = {
+                actions: {
+                    clickDay(e, self) {
+                        selectedCalendarDate = self.selectedDates[0] || null;
+                        const eventsForDate = selectedCalendarDate ? allLogsData.filter(log => log.timestamp.startsWith(selectedCalendarDate)) : allLogsData;
+                        displayEventsList(eventsForDate, selectedCalendarDate);
+                        updateMap();
+                    }
+                },
+                settings: { visibility: { highlighted: eventDates } },
+            };
+            if (calendar) calendar.destroy();
+            const calendarContainer = document.getElementById('calendar-container');
+            if(calendarContainer) {
+                calendar = new VanillaCalendar(calendarContainer, options);
+                calendar.init();
+            }
+        }
+
+        function displayEventsList(events, date) {
+            const list = document.getElementById('events-list');
+            list.innerHTML = '';
+            document.getElementById('events-list-title').textContent = date ? `Події за ${date}` : 'Всі події';
+            if (events.length === 0) {
+                list.innerHTML = '<li>Немає подій.</li>';
+                return;
+            }
+            events.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            events.forEach(log => {
+                const time = new Date(log.timestamp).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+                const li = document.createElement('li');
+                li.dataset.logId = log.uniqueId;
+                li.innerHTML = `<span class="layer-legend-color" style="background-color: ${log.fileColor};"></span><span><b>${log.name || 'Без назви'}</b> (${log.distance || 'N/A'}m) <small style="opacity:0.7;">- ${time}</small></span>`;
+                list.appendChild(li);
+            });
+        }
+
+        // --- EVENT LISTENERS FOR EVENTS LIST ---
+        const eventsListElement = document.getElementById('events-list');
+        eventsListElement.addEventListener('mouseover', (e) => {
+            const li = e.target.closest('li'); if (!li || !li.dataset.logId) return;
+            const feature = mapFeatures[li.dataset.logId];
+            if (feature && feature.polyline) { feature.polyline.setStyle({ weight: 7 }); }
+        });
+        eventsListElement.addEventListener('mouseout', () => {
+            Object.values(mapFeatures).forEach(feature => {
+                if (feature.polyline) { feature.polyline.setStyle({ weight: 3 }); }
+            });
+        });
+        eventsListElement.addEventListener('click', (e) => {
+            const li = e.target.closest('li'); if (!li || !li.dataset.logId) return;
+            const feature = mapFeatures[li.dataset.logId];
+            if (feature && feature.marker) { map.flyTo(feature.marker.getLatLng(), 15); feature.marker.openPopup(); }
+        });
+
+        // --- DEEPSTATE OVERLAY LOGIC ---
+        document.getElementById('deepstate-button').addEventListener('click', () => {
+            const center = map.getCenter();
+            const zoom = map.getZoom();
+            document.getElementById('deepstate-iframe').src = `https://deepstatemap.live/#${zoom}/${center.lat.toFixed(5)}/${center.lng.toFixed(5)}`;
+            iframeOverlay.classList.add('visible');
+            if (!overlayMap) {
+                overlayMap = L.map('leaflet-overlay-map', { zoomControl: false, attributionControl: false, layers: [overlayLayersGroup] });
+            }
+            overlayMap.setView(center, zoom);
+            populateOverlayMap();
+        });
+
+        document.getElementById('transfer-coords-button').addEventListener('click', () => {
+            iframeOverlay.classList.remove('visible');
+            const center = overlayMap.getCenter();
+            const defaultIcon = L.divIcon({
+                className: 'fa-solid fa-map-pin',
+                iconSize: [24, 24],
+                html: `<i class="fa-solid fa-map-pin" style="font-size: 24px; color: var(--accent-color); text-shadow: 0 0 3px rgba(0,0,0,0.5);"></i>`
+            });
+            startMarkerPlacement(`Точка з DeepState (${center.lat.toFixed(4)}, ${center.lng.toFixed(4)})`, defaultIcon, center);
+        });
+        
+        function populateOverlayMap() {
+             overlayLayersGroup.clearLayers();
+            let filteredLogs = allLogsData.filter(log => !selectedCalendarDate || log.timestamp.startsWith(selectedCalendarDate));
+            filteredLogs.forEach(log => { if (log.azimuth && log.distance) { drawObservation(log, overlayLayersGroup, true); } });
+            if (intersectionClusterGroup) {
+                intersectionClusterGroup.getLayers().forEach(marker => { L.marker(marker.getLatLng(), { icon: marker.options.icon }).bindPopup(marker.getPopup().getContent()).addTo(overlayLayersGroup); });
+            }
+            customPointsLayer.getLayers().forEach(marker => {
+                L.marker(marker.getLatLng(), { icon: marker.options.icon }).bindPopup(marker.getPopup().getContent()).addTo(overlayLayersGroup);
+            });
+            drawingsLayer.getLayers().forEach(layer => {
+                if (layer.getLatLngs) { 
+                    L.polyline(layer.getLatLngs(), layer.options).addTo(overlayLayersGroup);
+                } else if (layer.getLatLng) {
+                    L.marker(layer.getLatLng(), layer.options).addTo(overlayLayersGroup);
+                }
+            });
+        }
+
+
+        // --- LOGIC FOR DRAWING, CUSTOM POINTS, MODALS ---
+        const eventModalOverlay = document.getElementById('event-modal-overlay');
+        const drawingModalOverlay = document.getElementById('drawing-modal-overlay');
+        const customPointModal = document.getElementById('custom-point-modal-overlay');
+        let currentModalLog = null;
+        
+        // Event Modal
+        function openEventModal(log, coordinates) {
+            currentModalLog = { log: log, coordinates: coordinates };
+            document.getElementById('modal-title').textContent = log.name || 'Деталі події';
+            document.getElementById('modal-coords').textContent = `${coordinates[0].toFixed(5)}, ${coordinates[1].toFixed(5)}`;
+            const eventDate = new Date(log.timestamp);
+            document.getElementById('modal-datetime').textContent = eventDate.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
+            document.getElementById('modal-comment').textContent = log.comment || 'Немає';
+            eventModalOverlay.classList.add('visible');
+        }
+
+        function closeEventModal() {
+            eventModalOverlay.classList.remove('visible');
+            currentModalLog = null;
+            map.off('click');
+            document.getElementById('map').classList.remove('map-placement-mode');
+        }
+        document.getElementById('modal-close-button').addEventListener('click', closeEventModal);
+        eventModalOverlay.addEventListener('click', (e) => { if (e.target === eventModalOverlay) closeEventModal(); });
+        
+        // Drawing from event modal
+        function startDrawingFromEvent(type) {
+             if (!currentModalLog) return;
+            closeEventModal();
+            document.getElementById('map').classList.add('map-placement-mode');
+            const startPoint = currentModalLog.coordinates;
+            map.once('click', (e) => {
+                const endPoint = e.latlng;
+                const latlngs = [startPoint, [endPoint.lat, endPoint.lng]];
+                const line = L.polyline(latlngs, { color: currentModalLog.log.fileColor || '#ff0000', weight: 3 }).addTo(drawingsLayer);
+                if (type === 'arrow') {
+                    L.polylineDecorator(line, { patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: line.options.color } }) }] }).addTo(drawingsLayer);
+                } else {
+                    line.setStyle({ dashArray: '5, 10' });
+                }
+                document.getElementById('map').classList.remove('map-placement-mode');
+                currentModalLog = null;
+            });
+        }
+        document.getElementById('modal-draw-arrow').addEventListener('click', () => startDrawingFromEvent('arrow'));
+        document.getElementById('modal-draw-line').addEventListener('click', () => startDrawingFromEvent('line'));
+
+        // Drawing Modal
+        document.getElementById('draw-button').addEventListener('click', () => drawingModalOverlay.classList.add('visible'));
+        document.getElementById('drawing-modal-close-button').addEventListener('click', () => drawingModalOverlay.classList.remove('visible'));
+        drawingModalOverlay.addEventListener('click', (e) => { if (e.target === drawingModalOverlay) drawingModalOverlay.classList.remove('visible'); });
+
+        document.getElementById('drawing-options').addEventListener('click', (e) => {
+            const button = e.target.closest('.draw-option-button');
+            if (!button) return;
+            const drawType = button.dataset.drawType;
+            drawingModalOverlay.classList.remove('visible');
+            if (drawType === 'flexible-line') {
+                initiateFlexibleDrawing(drawType);
+            } else {
+                initiateStandardDrawing(drawType);
+            }
+        });
+
+        function initiateStandardDrawing(drawType) {
+            document.getElementById('map').classList.add('map-placement-mode');
+            map.once('click', (e1) => {
+                const startPoint = e1.latlng;
+                const startMarker = L.circleMarker(startPoint, { color: 'var(--accent-color)', radius: 5, weight: 2 }).addTo(map);
+                map.once('click', (e2) => {
+                    const endPoint = e2.latlng;
+                    drawDecoratedPolyline([startPoint, endPoint], drawType);
+                    document.getElementById('map').classList.remove('map-placement-mode');
+                    map.removeLayer(startMarker);
+                });
+            });
+        }
+
+        function initiateFlexibleDrawing(drawType) {
+            document.getElementById('map').classList.add('map-placement-mode');
+            const points = [];
+            const tempMarkers = L.layerGroup().addTo(map);
+            map.once('click', (e1) => {
+                points.push(e1.latlng);
+                tempMarkers.addLayer(L.circleMarker(e1.latlng, { color: 'var(--accent-color)', radius: 5, weight: 2 }));
+                map.once('click', (e2) => {
+                    points.push(e2.latlng);
+                    tempMarkers.addLayer(L.circleMarker(e2.latlng, { color: 'var(--accent-color)', radius: 5, weight: 2 }));
+                    map.once('click', (e3) => {
+                        points.push(e3.latlng);
+                        drawDecoratedPolyline(points, drawType);
+                        document.getElementById('map').classList.remove('map-placement-mode');
+                        tempMarkers.clearLayers();
+                    });
+                });
+            });
+        }
+
+        function drawDecoratedPolyline(latlngs, type) {
+            const selectedColor = document.getElementById('drawing-color-picker').value;
+            const polyline = L.polyline(latlngs, { color: selectedColor, weight: 3 }).addTo(drawingsLayer);
+
+            switch (type) {
+                case 'arrow':
+                    L.polylineDecorator(polyline, { patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: selectedColor } }) }] }).addTo(drawingsLayer);
+                    break;
+                case 'repeating-arrow':
+                    L.polylineDecorator(polyline, { patterns: [{ repeat: 80, symbol: L.Symbol.arrowHead({ pixelSize: 12, pathOptions: { color: selectedColor, fillOpacity: 1, weight: 0 }}) }] }).addTo(drawingsLayer);
+                    break;
+                case 'animated-arrow':
+                    const animatedArrowDecorator = L.polylineDecorator(polyline, { patterns: [{ offset: 0, repeat: 150, symbol: L.Symbol.arrowHead({ pixelSize: 12, pathOptions: { color: selectedColor, fillOpacity: 1, weight: 0 }}) }] }).addTo(drawingsLayer);
+                    let arrowOffset = 0;
+                    setInterval(() => {
+                        arrowOffset = (arrowOffset + 1) % 150;
+                        animatedArrowDecorator.setPatterns([{ offset: arrowOffset, repeat: 150, symbol: L.Symbol.arrowHead({ pixelSize: 12, pathOptions: { color: selectedColor, fillOpacity: 1, weight: 0 }}) }]);
+                    }, 80);
+                    break;
+                case 'dashed-line':
+                    polyline.setStyle({ dashArray: '10, 10' });
+                    break;
+                case 'animated-ants':
+                    polyline.setStyle({ opacity: 0.5 });
+                    const decorator = L.polylineDecorator(polyline, { patterns: [{ offset: 0, repeat: '20px', symbol: L.Symbol.dash({ pixelSize: 10, pathOptions: { color: 'white', weight: 2, opacity: 0.9 }}) }] }).addTo(drawingsLayer);
+                    let offset = 0;
+                    setInterval(() => {
+                        offset = (offset + 1) % 20;
+                        decorator.setPatterns([{ offset: offset, repeat: '20px', symbol: L.Symbol.dash({ pixelSize: 10, pathOptions: { color: 'white', weight: 2, opacity: 0.9 }}) }]);
+                    }, 100);
+                    break;
+                case 'icon-line':
+                    const customIcon = L.icon({ iconUrl: 'https://img.icons8.com/color/48/marker.png', iconSize: [32, 32], iconAnchor: [16, 32] });
+                    L.polylineDecorator(polyline, { patterns: [{ repeat: 150, symbol: L.Symbol.marker({ markerOptions: { icon: customIcon } }) }] }).addTo(drawingsLayer);
+                    break;
+            }
+        }
+        
+        // Custom Point Modal
+        document.getElementById('add-point-button').addEventListener('click', () => customPointModal.classList.add('visible'));
+        document.getElementById('custom-point-modal-close-button').addEventListener('click', () => customPointModal.classList.remove('visible'));
+        customPointModal.addEventListener('click', (e) => { if (e.target === customPointModal) customPointModal.classList.remove('visible'); });
+
+        document.querySelectorAll('input[name="point-icon-source"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const selected = document.querySelector('input[name="point-icon-source"]:checked').value;
+                document.getElementById('point-url-source-group').style.display = selected === 'url' ? 'block' : 'none';
+                document.getElementById('point-file-source-group').style.display = selected === 'file' ? 'block' : 'none';
+            });
+        });
+
+        document.querySelectorAll('input[name="icon-background-processing"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const selected = document.querySelector('input[name="icon-background-processing"]:checked').value;
+                document.getElementById('circle-bg-color-group').style.display = selected === 'circle-bg' ? 'block' : 'none';
+            });
+        });
+        
+        document.getElementById('place-point-submit').addEventListener('click', () => {
+            const name = document.getElementById('point-name-input').value.trim() || "Без назви";
+            const sourceType = document.querySelector('input[name="point-icon-source"]:checked').value;
+            const backgroundProcessingType = document.querySelector('input[name="icon-background-processing"]:checked').value;
+            const circleBgColor = document.getElementById('circle-bg-color-picker').value;
+            
+            let iconUrlPromise;
+
+            switch (sourceType) {
+                case 'url':
+                    const url = document.getElementById('point-url-input').value.trim();
+                    if (!url) { console.warn('Please provide an icon URL.'); return; }
+                    iconUrlPromise = Promise.resolve(url);
+                    break;
+                case 'file':
+                    const file = document.getElementById('point-file-input').files[0];
+                    if (!file) { console.warn('Please select an icon file.'); return; }
+                    iconUrlPromise = new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                    break;
+                default:
+                    const defaultIcon = L.divIcon({
+                        className: 'fa-solid fa-map-pin',
+                        iconSize: [24, 24],
+                        html: `<i class="fa-solid fa-map-pin" style="font-size: 24px; color: var(--accent-color); text-shadow: 0 0 3px rgba(0,0,0,0.5);"></i>`
+                    });
+                    startMarkerPlacement(name, defaultIcon);
+                    return;
+            }
+
+            iconUrlPromise.then(url => {
+                return processImageForIcon(url, backgroundProcessingType, circleBgColor);
+            }).then(processedDataUrl => {
+                const finalIcon = L.icon({
+                    iconUrl: processedDataUrl,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32],
+                    popupAnchor: [0, -32]
+                });
+                startMarkerPlacement(name, finalIcon);
+            }).catch(err => {
+                console.error("Icon creation or processing failed:", err);
+            });
+        });
+
+        function processImageForIcon(imageUrl, processingType, bgColor) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    const size = 32;
+                    canvas.width = size;
+                    canvas.height = size;
+
+                    if (processingType === 'circle-bg') {
+                        ctx.beginPath();
+                        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+                        ctx.fillStyle = bgColor;
+                        ctx.fill();
+                        ctx.clip();
+                    }
+
+                    ctx.drawImage(img, 0, 0, size, size);
+
+                    if (processingType === 'white-to-transparent') {
+                        const imageData = ctx.getImageData(0, 0, size, size);
+                        const pixels = imageData.data;
+                        for (let i = 0; i < pixels.length; i += 4) {
+                            if (pixels[i] > 240 && pixels[i + 1] > 240 && pixels[i + 2] > 240) {
+                                pixels[i + 3] = 0;
+                            }
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                    }
+                    resolve(canvas.toDataURL());
+                };
+                img.onerror = reject;
+                img.src = imageUrl;
+            });
+        }
+
+        function startMarkerPlacement(name, icon, latlng = null) {
+            const placeMarker = (pos) => {
+                const marker = L.marker(pos, { icon: icon, draggable: true }).addTo(customPointsLayer);
+                const timestamp = new Date();
+                const popupContent = `<b>${name}</b><hr style="margin: 5px 0;"><b>Координати:</b><br>${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}<br><b>Дата:</b> ${timestamp.toLocaleDateString('uk-UA')}<br><b>Час:</b> ${timestamp.toLocaleTimeString('uk-UA')}`;
+                marker.bindPopup(popupContent).openPopup();
+                
+                // Reset form
+                document.getElementById('point-name-input').value = '';
+                document.getElementById('point-url-input').value = '';
+                document.getElementById('point-file-input').value = null;
+                document.querySelector('input[name="point-icon-source"][value="default"]').checked = true;
+                document.querySelector('input[name="icon-background-processing"][value="none"]').checked = true;
+                document.getElementById('point-url-source-group').style.display = 'none';
+                document.getElementById('point-file-source-group').style.display = 'none';
+                document.getElementById('circle-bg-color-group').style.display = 'none';
+                document.getElementById('map').classList.remove('map-placement-mode');
+            };
+
+            customPointModal.classList.remove('visible');
+            if (latlng) {
+                placeMarker(latlng);
+            } else {
+                document.getElementById('map').classList.add('map-placement-mode');
+                map.once('click', (e) => placeMarker(e.latlng));
+            }
+        }
+
+
+        // --- 🛠️ HELPER & OTHER BUTTON FUNCTIONS ---
+        document.getElementById('gps-button').addEventListener('click', () => {
+            navigator.geolocation.getCurrentPosition(pos => {
+                map.flyTo([pos.coords.latitude, pos.coords.longitude], 13);
+            }, () => console.error("GPS Error: Could not get position."));
+        });
+
+        document.getElementById('export-button').addEventListener('click', () => {
+            const allFeatures = [
+                ...customPointsLayer.toGeoJSON().features,
+                ...drawingsLayer.toGeoJSON().features,
+                ...Object.values(fileLayerGroups).flatMap(lg => lg.toGeoJSON().features),
+                ...(intersectionClusterGroup ? intersectionClusterGroup.toGeoJSON().features : [])
+            ];
+            if(allFeatures.length === 0) {
+                console.warn("No data to export.");
+                return;
+            }
+
+            const featureCollection = { type: "FeatureCollection", features: allFeatures };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(featureCollection, null, 2));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", `map_export_${new Date().toISOString().slice(0,10)}.geojson`);
+            document.body.appendChild(dl);
+            dl.click();
+            dl.remove();
+        });
+
+        function filterForIntersection(logs) { return logs.filter(log => log.name && log.azimuth && log.distance && (parseAzimuth(log.azimuth)[1] - parseAzimuth(log.azimuth)[0]) <= 10); }
+        function generateHslColor(index, total) { const hue = (index * (360 / total)) % 360; return `hsl(${hue}, 70%, 50%)`; }
+        function parseAzimuth(az) { if (typeof az === 'string' && az.includes('-')) return az.split('-').map(Number); return [Number(az), Number(az)]; }
+        function getDestPoint(lat, lon, brng, dist) { const R = 6371e3; const l1 = lat * Math.PI / 180, n1 = lon * Math.PI / 180, b = brng * Math.PI / 180; const l2 = Math.asin(Math.sin(l1) * Math.cos(dist / R) + Math.cos(l1) * Math.sin(dist / R) * Math.cos(b)); const n2 = n1 + Math.atan2(Math.sin(b) * Math.sin(dist / R) * Math.cos(l1), Math.cos(dist / R) - Math.sin(l1) * Math.sin(l2)); return [l2 * 180 / Math.PI, n2 * 180 / Math.PI]; }
+        function findIntersection(logA, logB) { const azA = (parseAzimuth(logA.azimuth)[0] + parseAzimuth(logA.azimuth)[1]) / 2; const azB = (parseAzimuth(logB.azimuth)[0] + parseAzimuth(logB.azimuth)[1]) / 2; const p1 = logA.originCoordinates, p3 = logB.originCoordinates; const p2 = getDestPoint(p1.lat, p1.lon, azA, 10000), p4 = getDestPoint(p3.lat, p3.lon, azB, 10000); const x1 = p1.lon, y1 = p1.lat, x2 = p2[1], y2 = p2[0], x3 = p3.lon, y3 = p3.lat, x4 = p4[1], y4 = p4[0]; const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4); if (den === 0) return null; const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den; const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den; if (t > 0 && u > 0) return [y1 + t * (y2 - y1), x1 + t * (x2 - x1)]; return null; }
+        function calculateDistance(lat1, lon1, lat2, lon2) { const R = 6371e3; const p1 = lat1 * Math.PI / 180, p2 = lat2 * Math.PI / 180; const dP = (lat2 - lat1) * Math.PI / 180, dL = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dP / 2) * Math.sin(dP / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dL / 2) * Math.sin(dL / 2); const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); return R * c; }
+
+        // --- APPLICATION STARTUP ---
+        window.addEventListener('load', () => {
+            const buttonsToDrag = document.querySelectorAll('#action-buttons .action-button');
+            buttonsToDrag.forEach((button, index) => {
+                button.style.top = `${10 + (index * (40 + 8))}px`;
+                button.style.right = '10px';
+                makeDraggable(button);
+            });
+            
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) { 
+                toggleTheme(savedTheme); 
+            } else {
+                toggleTheme('light');
+            }
+            fetchDataFromSheet();
+            setInterval(() => fetchDataFromSheet(true), 30000);
+        });
+        
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
+
