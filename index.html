@@ -64,7 +64,6 @@
         }
 
         /* --- UI CONTROLS (BUTTONS, PANELS) --- */
-
         .ui-element {
             background: var(--bg-color);
             border: 1px solid var(--border-color);
@@ -82,7 +81,7 @@
             z-index: 1001;
         }
 
-        #panel-toggle-button {
+        #panel-toggle-button, #toolbar-settings-button {
             width: 45px;
             height: 45px;
             cursor: pointer;
@@ -93,14 +92,20 @@
             text-shadow: var(--icon-shadow);
             transition: all var(--transition-speed);
         }
+        #toolbar-settings-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+        }
 
-        #panel-toggle-button:hover {
+        #panel-toggle-button:hover, #toolbar-settings-button:hover {
             transform: scale(1.1);
             color: var(--accent-color);
         }
 
         #action-buttons {
-            /* This is now a non-visual container */
+            /* This is now a dynamic container for visible buttons */
         }
         
         .action-button {
@@ -180,7 +185,6 @@
         }
         .panel-header h2 { margin: 0; font-size: 18px; color: var(--text-color); }
         body.dark-theme .panel-header h2 { color: var(--text-color); }
-
 
         .panel-content {
             display: flex;
@@ -296,83 +300,118 @@
             background-color: #0056b3;
         }
 
-        /* --- DRAWING & CUSTOM POINT MODAL STYLES --- */
-        #drawing-options {
+        /* --- TOOLBAR SETTINGS MODAL --- */
+        #toolbar-button-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-top: 20px;
         }
-        .draw-option-button {
-            background-color: rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            padding: 15px;
-            cursor: pointer;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            color: var(--text-color);
+
+        .toolbar-button-item {
             display: flex;
-            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: background-color 0.2s, transform 0.2s;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(128,128,128,0.1);
+            border-radius: 8px;
+        }
+
+        .toolbar-button-item label {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+
+        .toolbar-button-item i {
+            font-size: 18px;
+            width: 20px;
             text-align: center;
-        }
-        .draw-option-button:hover {
-            background-color: rgba(0, 122, 255, 0.1);
-            border-color: var(--accent-color);
-            transform: translateY(-2px);
-        }
-        .draw-option-button i {
-            font-size: 24px;
             color: var(--accent-color);
         }
 
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        
+        /* --- DRAWING & CUSTOM POINT MODAL STYLES --- */
         .form-group { margin-bottom: 15px; }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            font-size: 14px;
-            color: var(--text-color);
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; color: var(--text-color); }
+        .form-group input[type="text"], .form-group input[type="file"], .form-group input[type="number"] {
+            width: calc(100% - 22px); padding: 10px; border: 1px solid var(--border-color);
+            background: transparent; color: var(--text-color); border-radius: 6px; font-size: 14px;
         }
-        .form-group input[type="text"], .form-group input[type="file"] {
-            width: calc(100% - 20px);
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: var(--text-color);
-            border-radius: 6px;
-            font-size: 14px;
+        .source-toggle {
+            display: flex; gap: 15px; justify-content: space-around;
+            background-color: rgba(0,0,0,0.05); padding: 8px; border-radius: 6px;
         }
-        .source-toggle, .background-processing-toggle {
+        #manual-coords-group {
             display: flex;
-            gap: 15px;
-            justify-content: space-around;
-            background-color: rgba(0,0,0,0.05);
-            padding: 8px;
-            border-radius: 6px;
+            gap: 10px;
         }
         #place-point-submit {
             width: 100%; padding: 12px; font-size: 16px; font-weight: 600; border: none;
             background: var(--accent-color); color: white; border-radius: 8px; cursor: pointer;
             margin-top: 15px; transition: background-color 0.2s;
         }
-        #place-point-submit:hover { background-color: #0056b3; }
+
+        #icon-collection-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+            gap: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 5px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 8px;
+        }
+        .icon-collection-item {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            padding: 2px;
+            transition: border-color 0.2s;
+        }
+        .icon-collection-item.selected {
+            border-color: var(--accent-color);
+        }
+         #drawing-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .draw-option-button {
+            background-color: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px; padding: 15px; cursor: pointer; font-size: 14px;
+            font-family: 'Inter', sans-serif; color: var(--text-color); display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            gap: 10px; transition: background-color 0.2s, transform 0.2s; text-align: center;
+        }
+        .draw-option-button:hover { background-color: rgba(0, 122, 255, 0.1); border-color: var(--accent-color); transform: translateY(-2px); }
+        .draw-option-button i { font-size: 24px; color: var(--accent-color); }
         .color-picker-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; padding: 10px; background-color: rgba(0,0,0,0.05); border-radius: 8px; }
         .color-picker-container label { font-weight: 500; }
-        #drawing-color-picker, #circle-bg-color-picker { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 40px; height: 40px; background-color: transparent; border: none; cursor: pointer; }
-        #drawing-color-picker::-webkit-color-swatch, #circle-bg-color-picker::-webkit-color-swatch { border-radius: 50%; border: 2px solid rgba(0,0,0,0.2); }
-        #drawing-color-picker::-moz-color-swatch, #circle-bg-color-picker::-moz-color-swatch { border-radius: 50%; border: 2px solid rgba(0,0,0,0.2); }
+        #drawing-color-picker { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 40px; height: 40px; background-color: transparent; border: none; cursor: pointer; }
+        #drawing-color-picker::-webkit-color-swatch { border-radius: 50%; border: 2px solid rgba(0,0,0,0.2); }
 
         /* --- Iframe Overlay Fullscreen --- */
         .iframe-container {
             width: 100%;
             height: 100%;
             position: relative;
-            background: #fff; /* Fallback background */
+            background: #fff;
         }
         #deepstate-iframe, #leaflet-overlay-map {
             position: absolute;
@@ -392,7 +431,7 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            z-index: 3; /* Must be on top of everything */
+            z-index: 3;
             display: flex;
             gap: 10px;
         }
@@ -422,106 +461,42 @@
             font-size: 16px;
         }
 
-        /* --- OTHER STYLES --- */
+        /* --- OTHER STYLES & LEAFLET OVERRIDES --- */
         #loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 3000; display: flex; justify-content: center; align-items: center; }
         .loader { border: 8px solid #f3f3f3; border-radius: 50%; border-top: 8px solid var(--accent-color); width: 60px; height: 60px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
         .map-placement-mode { cursor: crosshair !important; }
 
-        .intersection-icon { font-size: 24px !important; color: #d92f2f; text-shadow: 0 0 3px rgba(0,0,0,0.5); }
-        
-        /* --- CALENDAR STYLES --- */
-        .vanilla-calendar {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-            width: 100% !important;
-        }
-        .vanilla-calendar-month, .vanilla-calendar-year, .vanilla-calendar-week__day {
-            color: var(--text-color) !important;
-        }
-        .vanilla-calendar-arrow {
-            color: var(--text-color) !important;
-            background: rgba(128,128,128,0.1) !important;
-        }
-        body.dark-theme .vanilla-calendar-arrow {
-             background: rgba(255,255,255,0.1) !important;
-        }
-        .vanilla-calendar-day__btn { color: var(--text-color); }
-        
-        /* --- LEAFLET OVERRIDES --- */
-        .leaflet-control-zoom {
-            background: transparent !important;
-            border: none !important;
-            box-shadow: none !important;
-        }
-        .leaflet-control-zoom-in, .leaflet-control-zoom-out {
-            background: transparent !important;
-            color: var(--text-color) !important;
-            border: none !important;
-            box-shadow: none !important;
-            width: 36px !important;
-            height: 36px !important;
-            line-height: 36px !important;
-            font-size: 22px !important;
-            text-shadow: var(--icon-shadow) !important;
-        }
-         .leaflet-control-zoom a:hover {
-            background-color: transparent !important;
-        }
-
-        .leaflet-control-layers-toggle {
-             width: 36px !important;
-            height: 36px !important;
-            background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232c2c2c"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important;
-            filter: drop-shadow(var(--icon-shadow));
-        }
-        .leaflet-control-layers {
-            border: 1px solid var(--border-color) !important;
-            background: var(--bg-color) !important;
-            -webkit-backdrop-filter: var(--blur-effect);
-            backdrop-filter: var(--blur-effect);
-            box-shadow: 0 2px 10px var(--shadow-color) !important;
-            color: var(--text-color) !important;
-        }
-        body.dark-theme .leaflet-control-layers {
+        #coords-display {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            z-index: 1000;
+            background: transparent;
+            padding: 4px 8px;
+            font-size: 12px;
             color: var(--text-color);
+            text-shadow: 0 0 3px var(--main-bg), 0 0 3px var(--main-bg), 0 0 3px var(--main-bg);
         }
-        body.dark-theme .leaflet-control-layers-toggle {
-             background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f5f5f7"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important;
-        }
-
-
-        #layers-container .leaflet-control-layers { border: none !important; box-shadow: none !important; background: transparent !important; -webkit-backdrop-filter: none; backdrop-filter: none; }
+        
+        .leaflet-control-zoom { background: transparent !important; border: none !important; box-shadow: none !important; }
+        .leaflet-control-zoom-in, .leaflet-control-zoom-out { background: transparent !important; color: var(--text-color) !important; border: none !important; box-shadow: none !important; width: 36px !important; height: 36px !important; line-height: 36px !important; font-size: 22px !important; text-shadow: var(--icon-shadow) !important; }
+        .leaflet-control-zoom a:hover { background-color: transparent !important; }
+        .leaflet-control-layers-toggle { width: 36px !important; height: 36px !important; background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232c2c2c"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important; filter: drop-shadow(var(--icon-shadow)); }
+        .leaflet-control-layers { border: 1px solid var(--border-color) !important; background: var(--bg-color) !important; -webkit-backdrop-filter: var(--blur-effect); backdrop-filter: var(--blur-effect); box-shadow: 0 2px 10px var(--shadow-color) !important; color: var(--text-color) !important; }
+        body.dark-theme .leaflet-control-layers { color: var(--text-color); }
+        body.dark-theme .leaflet-control-layers-toggle { background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f5f5f7"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important; }
         
         /* --- RESPONSIVENESS --- */
         @media (max-width: 768px) {
-            .panel-content {
-                flex-direction: column;
-                max-height: calc(100vh - 150px); /* Adjust height for mobile */
-            }
-            .panel-column {
-                min-width: unset;
-                flex-basis: auto !important;
-            }
-            .modal-content {
-                width: 95%;
-            }
-            #action-buttons, #panel-toggle-container {
-                padding: 4px;
-            }
-            .action-button, #panel-toggle-button {
-                width: 40px;
-                height: 40px;
-            }
+            .panel-content { flex-direction: column; max-height: calc(100vh - 150px); }
+            .panel-column { min-width: unset; flex-basis: auto !important; }
+            .modal-content { width: 95%; }
+            #toolbar-settings-button { right: 5px; }
+            .action-button, #panel-toggle-button { width: 40px; height: 40px; }
+            #coords-display { font-size: 10px; bottom: 30px; } /* Adjust for mobile zoom controls */
         }
-        
-        @media (max-height: 500px) and (orientation: landscape) {
-             .panel-content {
-                max-height: calc(100vh - 100px);
-            }
-        }
+        @media (max-height: 500px) and (orientation: landscape) { .panel-content { max-height: calc(100vh - 100px); } }
     </style>
 </head>
 <body>
@@ -533,7 +508,14 @@
         </button>
     </div>
 
-    <div id="action-buttons">
+    <!-- This button is now permanent and opens the settings modal -->
+    <button id="toolbar-settings-button" title="Налаштувати панель"><i class="fa-solid fa-gears"></i></button>
+
+    <!-- This div will be dynamically populated with visible, draggable buttons -->
+    <div id="action-buttons"></div>
+
+    <!-- Hidden container for button templates -->
+    <div id="button-templates" style="display: none;">
         <button id="theme-toggle-button" class="action-button" title="Змінити тему"><i class="fa-solid fa-moon"></i></button>
         <button id="sync-button" class="action-button" title="Синхронізувати з Google Sheet"><i class="fa-solid fa-sync"></i><span id="sync-badge"></span></button>
         <button id="deepstate-button" class="action-button" title="Наложение на DeepState Map"><i class="fa-solid fa-layer-group"></i></button>
@@ -542,7 +524,7 @@
         <button id="gps-button" class="action-button" title="Знайти моє місцеположення"><i class="fa-solid fa-location-crosshairs"></i></button>
         <button id="upload-button" class="action-button" title="Завантажити логи"><i class="fa-solid fa-upload"></i></button>
         <button id="export-button" class="action-button" title="Експорт (GeoJSON)"><i class="fa-solid fa-file-export"></i></button>
-        <button id="install-button" class="action-button" title="Встановити додаток" style="display: none;"><i class="fa-solid fa-download"></i></button>
+        <button id="install-button" class="action-button" title="Встановити додаток"><i class="fa-solid fa-download"></i></button>
     </div>
 
     <div id="top-panel" class="ui-element collapsed">
@@ -569,8 +551,18 @@
     
     <input type="file" id="log-file-input" multiple accept=".json" style="display: none;">
     <div id="loader-overlay" class="hidden" style="display:none;"><div class="loader"></div></div>
+    <div id="coords-display">Lat: 0.00000, Lng: 0.00000</div>
 
     <!-- Modals -->
+    <div id="toolbar-settings-modal-overlay" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close">&times;</button>
+            <h3>Налаштування панелі</h3>
+            <p style="text-align: center; margin-top: -10px; opacity: 0.7; color: var(--text-color);">Оберіть, які інструменти показувати на карті.</p>
+            <ul id="toolbar-button-list"></ul>
+        </div>
+    </div>
+
     <div id="event-modal-overlay" class="modal-overlay">
         <div id="event-modal-content" class="modal-content">
             <button id="modal-close-button" class="modal-close">&times;</button>
@@ -586,13 +578,12 @@
             </div>
         </div>
     </div>
-
     <div id="drawing-modal-overlay" class="modal-overlay">
-        <div id="drawing-modal-content" class="modal-content" style="max-width: 600px;">
+         <div id="drawing-modal-content" class="modal-content" style="max-width: 600px;">
             <button id="drawing-modal-close-button" class="modal-close">&times;</button>
             <h3>Інструменти малювання</h3>
             <p style="text-align: center; margin-top: -10px; opacity: 0.7;">Оберіть інструмент, колір, а потім клацніть на карті для малювання.</p>
-            <div class="color-picker-container">
+             <div class="color-picker-container">
                 <label for="drawing-color-picker">Колір:</label>
                 <input type="color" id="drawing-color-picker" value="#ff4747">
             </div>
@@ -607,7 +598,6 @@
             </div>
         </div>
     </div>
-
     <div id="custom-point-modal-overlay" class="modal-overlay">
         <div id="custom-point-modal-content" class="modal-content" style="max-width: 450px;">
             <button id="custom-point-modal-close-button" class="modal-close">&times;</button>
@@ -617,34 +607,51 @@
                 <input type="text" id="point-name-input" placeholder="Наприклад, 'Позиція 1'">
             </div>
             <div class="form-group">
+                <label>Джерело координат:</label>
+                <div class="source-toggle">
+                    <label><input type="radio" name="point-coord-source" value="map" checked> Обрати на карті</label>
+                    <label><input type="radio" name="point-coord-source" value="manual"> Ввести вручну</label>
+                </div>
+            </div>
+            <div id="manual-coords-group" class="form-group" style="display: none;">
+                <div style="flex: 1;">
+                    <label for="point-lat-input">Широта (Lat):</label>
+                    <input type="number" id="point-lat-input" placeholder="50.4501">
+                </div>
+                <div style="flex: 1;">
+                    <label for="point-lng-input">Довгота (Lng):</label>
+                    <input type="number" id="point-lng-input" placeholder="30.5234">
+                </div>
+            </div>
+            <div class="form-group">
                 <label>Іконка:</label>
                 <div class="source-toggle">
                     <label><input type="radio" name="point-icon-source" value="default" checked> Стандартна</label>
+                    <label><input type="radio" name="point-icon-source" value="collection"> З колекції</label>
                     <label><input type="radio" name="point-icon-source" value="url"> URL</label>
                     <label><input type="radio" name="point-icon-source" value="file"> Файл</label>
                 </div>
             </div>
+            <div id="icon-collection-container" class="form-group" style="display: none;">
+                <label>Ваша колекція:</label>
+                <div id="icon-collection-grid"></div>
+            </div>
             <div id="point-url-source-group" class="form-group" style="display: none;">
-                <label for="point-url-input">Посилання на іконку:</label>
-                <input type="text" id="point-url-input" placeholder="https://example.com/icon.png">
+                 <label for="point-url-input">Посилання на іконку:</label>
+                 <input type="text" id="point-url-input" placeholder="https://example.com/icon.png">
             </div>
             <div id="point-file-source-group" class="form-group" style="display: none;">
-                <label for="point-file-input">Завантажити файл (PNG, JPG, SVG):</label>
-                <input type="file" id="point-file-input" accept="image/*">
+                 <label for="point-file-input">Завантажити файл (PNG, JPG, SVG):</label>
+                 <input type="file" id="point-file-input" accept="image/*">
             </div>
-            <div class="form-group">
+             <div class="form-group" id="icon-processing-group" style="display: none;">
                 <label>Обробка фону іконки:</label>
-                <div class="background-processing-toggle">
+                <div class="source-toggle">
                     <label><input type="radio" name="icon-background-processing" value="none" checked> Без змін</label>
-                    <label><input type="radio" name="icon-background-processing" value="circle-bg"> Круглий фон</label>
                     <label><input type="radio" name="icon-background-processing" value="white-to-transparent"> Білий в прозорий</label>
                 </div>
-                <div id="circle-bg-color-group" class="form-group" style="display: none; margin-top: 10px;">
-                    <label for="circle-bg-color-picker">Колір фону:</label>
-                    <input type="color" id="circle-bg-color-picker" value="#ffffff">
-                </div>
             </div>
-            <button id="place-point-submit">Розмістити на карті</button>
+            <button id="place-point-submit">Розмістити точку</button>
         </div>
     </div>
     
@@ -662,6 +669,7 @@
         let mapFeatures = {};
         let lastSyncRowCount = 0;
         let deferredPrompt;
+        let customIconCollection = [];
 
         // --- Map and layers initialization ---
         const map = L.map('map', { zoomControl: false }).setView([50.41, 30.64], 11);
@@ -683,66 +691,75 @@
         const iframeCloseButton = document.getElementById('iframe-close-button');
         const panelToggleButton = document.getElementById('panel-toggle-button');
         const topPanel = document.getElementById('top-panel');
-        const themeToggleButton = document.getElementById('theme-toggle-button');
-        const themeIcon = themeToggleButton.querySelector('i');
-        const actionButtonsContainer = document.getElementById('action-buttons');
+        const coordsDisplay = document.getElementById('coords-display');
+        const customPointModal = document.getElementById('custom-point-modal-overlay');
+        const drawingModalOverlay = document.getElementById('drawing-modal-overlay');
         let overlayMap = null;
         let overlayLayersGroup = L.layerGroup();
         
+        // --- TOOLBAR CONFIG ---
+        const toolbarSettingsButton = document.getElementById('toolbar-settings-button');
+        const toolbarSettingsModal = document.getElementById('toolbar-settings-modal-overlay');
+        const actionButtonsContainer = document.getElementById('action-buttons');
+        const buttonTemplates = document.getElementById('button-templates');
+        
+        const AVAILABLE_BUTTONS = [
+            { id: 'theme-toggle-button', title: 'Змінити тему', icon: 'fa-solid fa-moon' },
+            { id: 'sync-button', title: 'Синхронізація', icon: 'fa-solid fa-sync' },
+            { id: 'deepstate-button', title: 'DeepState', icon: 'fa-solid fa-layer-group' },
+            { id: 'add-point-button', title: 'Додати точку', icon: 'fa-solid fa-map-pin' },
+            { id: 'draw-button', title: 'Малювання', icon: 'fa-solid fa-pencil-ruler' },
+            { id: 'gps-button', title: 'Моє місце', icon: 'fa-solid fa-location-crosshairs' },
+            { id: 'upload-button', title: 'Завантажити лог', icon: 'fa-solid fa-upload' },
+            { id: 'export-button', title: 'Експорт', icon: 'fa-solid fa-file-export' },
+            { id: 'install-button', title: 'Встановити', icon: 'fa-solid fa-download' }
+        ];
+        
+        let visibleButtonIds = [];
+
         // --- PWA INSTALL LOGIC ---
-        const installButton = document.getElementById('install-button');
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            installButton.style.display = 'flex';
-        });
-
-        installButton.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response to the install prompt: ${outcome}`);
-                deferredPrompt = null;
-                installButton.style.display = 'none';
-            }
+            updateButtonVisibilityInSettings('install-button', true);
         });
         
         window.addEventListener('appinstalled', () => {
              deferredPrompt = null;
-             installButton.style.display = 'none';
+             updateButtonVisibilityInSettings('install-button', false);
              console.log('PWA was installed');
         });
+        
+        function updateButtonVisibilityInSettings(buttonId, shouldBeVisible) {
+            const buttonConfig = document.querySelector(`.toolbar-button-item input[data-id="${buttonId}"]`);
+            if (buttonConfig) {
+                 buttonConfig.parentElement.parentElement.style.display = shouldBeVisible ? 'flex' : 'none';
+            }
+        }
 
         // --- THEME & UI LOGIC ---
         const toggleTheme = (forceTheme = null) => {
             const body = document.body;
-            let isDark;
-
-            if (forceTheme) {
-                isDark = forceTheme === 'dark';
-            } else {
-                isDark = !body.classList.contains('dark-theme');
-            }
+            let isDark = forceTheme ? forceTheme === 'dark' : !body.classList.contains('dark-theme');
 
             body.classList.toggle('dark-theme', isDark);
-            themeIcon.classList.toggle('fa-sun', isDark);
-            themeIcon.classList.toggle('fa-moon', !isDark);
+            
+            const themeIconInTemplate = buttonTemplates.querySelector('#theme-toggle-button i');
+            if (themeIconInTemplate) themeIconInTemplate.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            
+            const themeIconOnMap = actionButtonsContainer.querySelector('#theme-toggle-button i');
+            if (themeIconOnMap) themeIconOnMap.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
 
             if (isDark) {
-                if (map.hasLayer(baseLayers["Стандартна"])) {
-                    map.removeLayer(baseLayers["Стандартна"]);
-                }
-                map.addLayer(baseLayers["Супутник"]);
+                if (map.hasLayer(baseLayers["Стандартна"])) map.removeLayer(baseLayers["Стандартна"]);
+                if (!map.hasLayer(baseLayers["Супутник"])) map.addLayer(baseLayers["Супутник"]);
             } else {
-                if (map.hasLayer(baseLayers["Супутник"])) {
-                    map.removeLayer(baseLayers["Супутник"]);
-                }
-                map.addLayer(baseLayers["Стандартна"]);
+                if (map.hasLayer(baseLayers["Супутник"])) map.removeLayer(baseLayers["Супутник"]);
+                if (!map.hasLayer(baseLayers["Стандартна"])) map.addLayer(baseLayers["Стандартна"]);
             }
         };
-
-        themeToggleButton.addEventListener('click', () => toggleTheme());
         
         panelToggleButton.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -750,42 +767,33 @@
         });
 
         document.addEventListener('click', (e) => {
-            const isClickInsidePanel = e.target.closest('#top-panel');
-            const isClickOnToggleButton = e.target.closest('#panel-toggle-button');
-            if (!topPanel.classList.contains('collapsed') && !isClickInsidePanel && !isClickOnToggleButton) {
+            if (!topPanel.classList.contains('collapsed') && !e.target.closest('#top-panel') && !e.target.closest('#panel-toggle-button')) {
                 topPanel.classList.add('collapsed');
             }
         });
         
-        iframeCloseButton.addEventListener('click', () => {
-            iframeOverlay.classList.remove('visible');
+        iframeCloseButton.addEventListener('click', () => iframeOverlay.classList.remove('visible'));
+        
+        map.on('mousemove', (e) => {
+            coordsDisplay.innerHTML = `Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}`;
         });
         
         // --- DRAGGABLE BUTTONS LOGIC ---
         function makeDraggable(element) {
-            let isDragging = false;
-            let wasDragged = false;
-            let offsetX, offsetY;
-            let startX, startY;
+            let isDragging = false, wasDragged = false, offsetX, offsetY, startX, startY;
             const clickThreshold = 5;
 
             function onDown(e) {
                 if (e.button === 2) return;
-
                 isDragging = true;
                 wasDragged = false;
                 element.classList.add('grabbing');
-                
-                const touch = e.type === 'touchstart';
-                const event = touch ? e.touches[0] : e;
-                
+                const touch = e.type === 'touchstart', event = touch ? e.touches[0] : e;
                 startX = event.clientX;
                 startY = event.clientY;
-                
                 const rect = element.getBoundingClientRect();
                 offsetX = event.clientX - rect.left;
                 offsetY = event.clientY - rect.top;
-                
                 window.addEventListener('mousemove', onMove);
                 window.addEventListener('touchmove', onMove, { passive: false });
                 window.addEventListener('mouseup', onUp);
@@ -795,23 +803,14 @@
             function onMove(e) {
                 if (!isDragging) return;
                 if (e.cancelable) e.preventDefault();
-                
-                const touch = e.type === 'touchmove';
-                const event = touch ? e.touches[0] : e;
-                
+                const touch = e.type === 'touchmove', event = touch ? e.touches[0] : e;
                 if (!wasDragged && (Math.abs(event.clientX - startX) > clickThreshold || Math.abs(event.clientY - startY) > clickThreshold)) {
                     wasDragged = true;
                 }
-
-                let newLeft = event.clientX - offsetX;
-                let newTop = event.clientY - offsetY;
-
-                const rect = element.getBoundingClientRect();
-                const parentRect = document.body.getBoundingClientRect();
-                
+                let newLeft = event.clientX - offsetX, newTop = event.clientY - offsetY;
+                const rect = element.getBoundingClientRect(), parentRect = document.body.getBoundingClientRect();
                 newLeft = Math.max(0, Math.min(newLeft, parentRect.width - rect.width));
                 newTop = Math.max(0, Math.min(newTop, parentRect.height - rect.height));
-
                 element.style.left = `${newLeft}px`;
                 element.style.top = `${newTop}px`;
                 element.style.right = 'auto';
@@ -824,10 +823,7 @@
                 window.removeEventListener('touchmove', onMove);
                 window.removeEventListener('mouseup', onUp);
                 window.removeEventListener('touchend', onUp);
-                
-                setTimeout(() => {
-                    wasDragged = false;
-                }, 0);
+                setTimeout(() => { wasDragged = false; }, 0);
             }
             
             element.addEventListener('click', (e) => {
@@ -841,18 +837,20 @@
             element.addEventListener('touchstart', onDown, { passive: false });
         }
         
-        // --- DATA HANDLING (GOOGLE SHEETS, FILES) ---
-        
-        document.getElementById('sync-button').addEventListener('click', () => fetchDataFromSheet(false));
-        document.getElementById('upload-button').addEventListener('click', () => logFileInput.click());
-        logFileInput.addEventListener('change', handleFileSelect);
+        // --- HELPER FUNCTIONS ---
+        function filterForIntersection(logs) { return logs.filter(log => log.name && log.azimuth && log.distance && (parseAzimuth(log.azimuth)[1] - parseAzimuth(log.azimuth)[0]) <= 10); }
+        function generateHslColor(index, total) { const hue = (index * (360 / total)) % 360; return `hsl(${hue}, 70%, 50%)`; }
+        function parseAzimuth(az) { if (typeof az === 'string' && az.includes('-')) return az.split('-').map(Number); return [Number(az), Number(az)]; }
+        function getDestPoint(lat, lon, brng, dist) { const R = 6371e3; const l1 = lat * Math.PI / 180, n1 = lon * Math.PI / 180, b = brng * Math.PI / 180; const l2 = Math.asin(Math.sin(l1) * Math.cos(dist / R) + Math.cos(l1) * Math.sin(dist / R) * Math.cos(b)); const n2 = n1 + Math.atan2(Math.sin(b) * Math.sin(dist / R) * Math.cos(l1), Math.cos(dist / R) - Math.sin(l1) * Math.sin(l2)); return [l2 * 180 / Math.PI, n2 * 180 / Math.PI]; }
+        function findIntersection(logA, logB) { const azA = (parseAzimuth(logA.azimuth)[0] + parseAzimuth(logA.azimuth)[1]) / 2; const azB = (parseAzimuth(logB.azimuth)[0] + parseAzimuth(logB.azimuth)[1]) / 2; const p1 = logA.originCoordinates, p3 = logB.originCoordinates; const p2 = getDestPoint(p1.lat, p1.lon, azA, 10000), p4 = getDestPoint(p3.lat, p3.lon, azB, 10000); const x1 = p1.lon, y1 = p1.lat, x2 = p2[1], y2 = p2[0], x3 = p3.lon, y3 = p3.lat, x4 = p4[1], y4 = p4[0]; const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4); if (den === 0) return null; const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den; const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den; if (t > 0 && u > 0) return [y1 + t * (y2 - y1), x1 + t * (x2 - x1)]; return null; }
+        function calculateDistance(lat1, lon1, lat2, lon2) { const R = 6371e3; const p1 = lat1 * Math.PI / 180, p2 = lat2 * Math.PI / 180; const dP = (lat2 - lat1) * Math.PI / 180, dL = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dP / 2) * Math.sin(dP / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dL / 2) * Math.sin(dL / 2); const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); return R * c; }
 
+        // --- DATA HANDLING ---
         async function fetchDataFromSheet(isSilent = false) {
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('YOUR_GOOGLE_APPS_SCRIPT_URL')) {
-                if (!isSilent) console.error('Error: Google Apps Script URL not specified.');
-                return;
+            const syncButton = document.querySelector('#sync-button i');
+            if (!isSilent && syncButton) {
+                syncButton.classList.add('fa-spin');
             }
-            if (!isSilent) loader.style.display = 'flex';
             
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL);
@@ -862,35 +860,29 @@
                 if (isSilent) {
                     const newRowCount = sheetData.length;
                     const newEventsCount = newRowCount - (lastSyncRowCount || 0);
-                    const syncBadge = document.getElementById('sync-badge');
-                    if (newEventsCount > 0) {
+                    const syncBadge = document.querySelector('#sync-badge');
+                    if (syncBadge && newEventsCount > 0) {
                         syncBadge.textContent = newEventsCount;
                         syncBadge.style.display = 'flex';
-                    } else {
+                    } else if (syncBadge) {
                         syncBadge.style.display = 'none';
                     }
                     return;
                 }
 
                 lastSyncRowCount = sheetData.length;
-                document.getElementById('sync-badge').style.display = 'none';
+                const syncBadge = document.querySelector('#sync-badge');
+                if (syncBadge) syncBadge.style.display = 'none';
 
-                const formattedData = sheetData.map((row, index) => ({
+                allLogsData = sheetData.map((row, index) => ({
                     name: row.Event, timestamp: row.Timestamp, azimuth: row.Azimuth,
                     distance: row.Distance ? parseInt(row.Distance, 10) : null,
                     comment: row.Comment, uniqueId: row.UniqueID || `sheet_${index}`,
                     originCoordinates: { lat: parseFloat(row.Latitude), lon: parseFloat(row.Longitude) },
                     fileName: `Sheet: ${row.Shift} | ${row.Position}`,
                     fileColor: generateHslColor(index, sheetData.length)
-                }));
+                })).filter(log => !isNaN(log.originCoordinates.lat) && !isNaN(log.originCoordinates.lon));
                 
-                const validData = formattedData.filter(log => !isNaN(log.originCoordinates.lat) && !isNaN(log.originCoordinates.lon));
-
-                if (validData.length < formattedData.length && !isSilent) {
-                    console.warn(`Warning: ${formattedData.length - validData.length} records from the sheet were ignored due to invalid coordinates.`);
-                }
-                
-                allLogsData = validData;
                 initCalendar();
                 updateMap();
                 displayEventsList(allLogsData, null);
@@ -899,16 +891,15 @@
                 if (!isSilent) console.error('Failed to load data from Google Sheet.');
                 console.error('Fetch error:', error);
             } finally {
-                if (!isSilent) loader.style.display = 'none';
+                if (!isSilent && syncButton) {
+                    syncButton.classList.remove('fa-spin');
+                }
             }
         }
         
         function handleFileSelect(event) {
-            loader.style.display = 'flex';
-            if (mapLayersControl) { map.removeControl(mapLayersControl); mapLayersControl = null; }
-            Object.values(fileLayerGroups).forEach(group => group.clearLayers());
-            if (intersectionClusterGroup) { intersectionClusterGroup.clearLayers(); map.removeLayer(intersectionClusterGroup); }
-            allLogsData = []; fileLayerGroups = {}; mapFeatures = {};
+            loader.style.display = 'flex'; // Full loader for file processing is ok
+            allLogsData = [];
             let logIdCounter = 0;
             const files = Array.from(event.target.files);
             const promises = files.map((file, index) => new Promise((resolve) => {
@@ -919,10 +910,10 @@
                         let processedLogs = [];
                         if (data.events && data.position && data.position.location) {
                             const originCoordinates = { lat: data.position.location.lat, lon: data.position.location.lon };
-                            data.events.forEach(event => { processedLogs.push({ ...event, distance: event.distance ? parseInt(event.distance, 10) : null, uniqueId: `log_${logIdCounter++}`, originCoordinates: originCoordinates, fileName: file.name, fileColor: generateHslColor(index, files.length) }); });
+                            data.events.forEach(event => processedLogs.push({ ...event, uniqueId: `log_${logIdCounter++}`, originCoordinates, fileName: file.name, fileColor: generateHslColor(index, files.length) }));
                         } else if (data.logs && data.originCoordinates) {
-                            data.logs.forEach(log => { log.uniqueId = `log_${logIdCounter++}`; log.originCoordinates = data.originCoordinates; log.fileName = file.name; log.fileColor = generateHslColor(index, files.length); processedLogs.push(log); });
-                        } else { console.warn(`File ${file.name} has an unknown format.`); }
+                            data.logs.forEach(log => processedLogs.push({ ...log, uniqueId: `log_${logIdCounter++}`, originCoordinates, fileName: file.name, fileColor: generateHslColor(index, files.length) }));
+                        }
                         allLogsData.push(...processedLogs);
                     } catch (error) { console.error(`Error parsing file ${file.name}.`); }
                     resolve();
@@ -936,13 +927,15 @@
             });
         }
 
-        // --- MAP & PANEL DISPLAY LOGIC ---
-
+        // --- MAP & UI UPDATE LOGIC ---
         function updateMap() {
-            if (mapLayersControl) { map.removeControl(mapLayersControl); mapLayersControl = null; }
-            Object.values(fileLayerGroups).forEach(group => { if(map.hasLayer(group)) map.removeLayer(group); });
-            if (intersectionClusterGroup) { intersectionClusterGroup.clearLayers(); if(map.hasLayer(intersectionClusterGroup)) map.removeLayer(intersectionClusterGroup); }
-            fileLayerGroups = {}; mapFeatures = {};
+            if (mapLayersControl) map.removeControl(mapLayersControl);
+            Object.values(fileLayerGroups).forEach(group => map.removeLayer(group));
+            if (intersectionClusterGroup) map.removeLayer(intersectionClusterGroup);
+            
+            fileLayerGroups = {};
+            mapFeatures = {};
+            
             let filteredLogs = allLogsData.filter(log => !selectedCalendarDate || log.timestamp.startsWith(selectedCalendarDate));
             drawLogVisuals(filteredLogs);
             calculateAndDrawIntersections(filterForIntersection(filteredLogs));
@@ -951,8 +944,7 @@
         function drawLogVisuals(logsToDraw) {
             const overlayMaps = {};
             const logsByFile = logsToDraw.reduce((acc, log) => {
-                if (!acc[log.fileName]) acc[log.fileName] = [];
-                acc[log.fileName].push(log);
+                (acc[log.fileName] = acc[log.fileName] || []).push(log);
                 return acc;
             }, {});
 
@@ -963,10 +955,9 @@
                 const fileGroup = L.layerGroup();
                 const originsDrawn = new Set();
                 logs.forEach(log => {
-                    const origin = log.originCoordinates;
-                    const originKey = `${origin.lat},${origin.lon}`;
+                    const originKey = `${log.originCoordinates.lat},${log.originCoordinates.lon}`;
                     if (!originsDrawn.has(originKey)) {
-                        L.marker([origin.lat, origin.lon], { icon: L.divIcon({ className: 'fa-solid fa-user-secret', iconSize: [20, 20], html: `<i class="fa-solid fa-user-secret" style="color: ${fileColor}; font-size: 20px;"></i>` }) }).addTo(fileGroup).bindPopup(`<b>Спостерігач</b><br>${fileName}`);
+                        L.marker([log.originCoordinates.lat, log.originCoordinates.lon], { icon: L.divIcon({ className: 'fa-solid fa-user-secret', iconSize: [20, 20], html: `<i class="fa-solid fa-user-secret" style="color: ${fileColor}; font-size: 20px;"></i>` }) }).addTo(fileGroup).bindPopup(`<b>Спостерігач</b><br>${fileName}`);
                         originsDrawn.add(originKey);
                     }
                     if (log.azimuth && log.distance) drawObservation(log, fileGroup);
@@ -981,20 +972,7 @@
             overlayMaps[`<i class="fa-solid fa-map-pin" style="color:var(--accent-color);"></i> Мої точки`] = customPointsLayer;
             overlayMaps[`<i class="fa-solid fa-pencil" style="color:#f5a623;"></i> Малюнки`] = drawingsLayer;
 
-            mapLayersControl = L.control.layers(null, overlayMaps, { collapsed: true });
-            mapLayersControl.addTo(map);
-
-            const layersContainer = document.getElementById('layers-container');
-            layersContainer.innerHTML = '';
-            const list = document.createElement('ul');
-            list.style.cssText = 'list-style: none; padding: 0; margin: 0;';
-            Object.keys(overlayMaps).forEach(layerName => {
-                const li = document.createElement('li');
-                li.innerHTML = layerName;
-                li.style.padding = '5px 0';
-                list.appendChild(li);
-            });
-            layersContainer.appendChild(list);
+            mapLayersControl = L.control.layers(null, overlayMaps, { collapsed: true }).addTo(map);
             
             Object.values(fileLayerGroups).forEach(group => map.addLayer(group));
             if (intersectionClusterGroup) map.addLayer(intersectionClusterGroup);
@@ -1002,8 +980,8 @@
         
         function drawObservation(log, layerGroup, isOverlay = false) {
             const originPoint = [log.originCoordinates.lat, log.originCoordinates.lon];
-            const averageAzimuth = (parseAzimuth(log.azimuth)[0] + parseAzimuth(log.azimuth)[1]) / 2;
-            const targetPoint = getDestPoint(originPoint[0], originPoint[1], averageAzimuth, log.distance);
+            const avgAzimuth = (parseAzimuth(log.azimuth)[0] + parseAzimuth(log.azimuth)[1]) / 2;
+            const targetPoint = getDestPoint(originPoint[0], originPoint[1], avgAzimuth, log.distance);
             
             const polyline = L.polyline([originPoint, targetPoint], { color: log.fileColor, weight: 3, opacity: 0.9 }).addTo(layerGroup);
             const marker = L.circle(targetPoint, { color: log.fileColor, fillColor: log.fileColor, fillOpacity: 0.4, radius: 25 }).addTo(layerGroup);
@@ -1022,10 +1000,8 @@
                     if (logA.fileName === logB.fileName) continue;
                     const iPoint = findIntersection(logA, logB);
                     if (iPoint) {
-                        const distA = calculateDistance(logA.originCoordinates.lat, logA.originCoordinates.lon, iPoint[0], iPoint[1]);
-                        const distB = calculateDistance(logB.originCoordinates.lat, logB.originCoordinates.lon, iPoint[0], iPoint[1]);
-                        const popup = `<b>Перетин</b><br><b>Коорд:</b> ${iPoint[0].toFixed(5)}, ${iPoint[1].toFixed(5)}<hr><b>Файл 1:</b> ${logA.fileName}<br><b>Дист:</b> ${Math.round(distA)} м<br><hr><b>Файл 2:</b> ${logB.fileName}<br><b>Дист:</b> ${Math.round(distB)} м`;
-                        const marker = L.marker(iPoint, { icon: L.divIcon({ className: 'fa-solid fa-crosshairs intersection-icon', iconSize: [24, 24] }) }).bindPopup(popup);
+                        const popup = `<b>Перетин</b><br><b>Коорд:</b> ${iPoint[0].toFixed(5)}, ${iPoint[1].toFixed(5)}`;
+                        const marker = L.marker(iPoint, { icon: L.divIcon({ className: 'fa-solid fa-crosshairs intersection-icon' }) }).bindPopup(popup);
                         intersectionClusterGroup.addLayer(marker);
                     }
                 }
@@ -1071,17 +1047,14 @@
             });
         }
 
-        // --- EVENT LISTENERS FOR EVENTS LIST ---
         const eventsListElement = document.getElementById('events-list');
         eventsListElement.addEventListener('mouseover', (e) => {
             const li = e.target.closest('li'); if (!li || !li.dataset.logId) return;
             const feature = mapFeatures[li.dataset.logId];
-            if (feature && feature.polyline) { feature.polyline.setStyle({ weight: 7 }); }
+            if (feature && feature.polyline) feature.polyline.setStyle({ weight: 7 });
         });
         eventsListElement.addEventListener('mouseout', () => {
-            Object.values(mapFeatures).forEach(feature => {
-                if (feature.polyline) { feature.polyline.setStyle({ weight: 3 }); }
-            });
+            Object.values(mapFeatures).forEach(f => f.polyline && f.polyline.setStyle({ weight: 3 }));
         });
         eventsListElement.addEventListener('click', (e) => {
             const li = e.target.closest('li'); if (!li || !li.dataset.logId) return;
@@ -1089,8 +1062,11 @@
             if (feature && feature.marker) { map.flyTo(feature.marker.getLatLng(), 15); feature.marker.openPopup(); }
         });
 
-        // --- DEEPSTATE OVERLAY LOGIC ---
-        document.getElementById('deepstate-button').addEventListener('click', () => {
+        // --- DEEPSTATE OVERLAY LOGIC, MODALS, DRAWING, etc. ---
+        const eventModalOverlay = document.getElementById('event-modal-overlay');
+        let currentModalLog = null;
+        
+        function openDeepStateOverlay() {
             const center = map.getCenter();
             const zoom = map.getZoom();
             document.getElementById('deepstate-iframe').src = `https://deepstatemap.live/#${zoom}/${center.lat.toFixed(5)}/${center.lng.toFixed(5)}`;
@@ -1100,7 +1076,7 @@
             }
             overlayMap.setView(center, zoom);
             populateOverlayMap();
-        });
+        }
 
         document.getElementById('transfer-coords-button').addEventListener('click', () => {
             iframeOverlay.classList.remove('visible');
@@ -1113,8 +1089,8 @@
             startMarkerPlacement(`Точка з DeepState (${center.lat.toFixed(4)}, ${center.lng.toFixed(4)})`, defaultIcon, center);
         });
         
-        function populateOverlayMap() {
-             overlayLayersGroup.clearLayers();
+        function populateOverlayMap() { 
+            overlayLayersGroup.clearLayers();
             let filteredLogs = allLogsData.filter(log => !selectedCalendarDate || log.timestamp.startsWith(selectedCalendarDate));
             filteredLogs.forEach(log => { if (log.azimuth && log.distance) { drawObservation(log, overlayLayersGroup, true); } });
             if (intersectionClusterGroup) {
@@ -1124,33 +1100,20 @@
                 L.marker(marker.getLatLng(), { icon: marker.options.icon }).bindPopup(marker.getPopup().getContent()).addTo(overlayLayersGroup);
             });
             drawingsLayer.getLayers().forEach(layer => {
-                if (layer.getLatLngs) { 
-                    L.polyline(layer.getLatLngs(), layer.options).addTo(overlayLayersGroup);
-                } else if (layer.getLatLng) {
-                    L.marker(layer.getLatLng(), layer.options).addTo(overlayLayersGroup);
-                }
+                if (layer.getLatLngs) { L.polyline(layer.getLatLngs(), layer.options).addTo(overlayLayersGroup); }
+                else if (layer.getLatLng) { L.marker(layer.getLatLng(), layer.options).addTo(overlayLayersGroup); }
             });
-        }
-
-
-        // --- LOGIC FOR DRAWING, CUSTOM POINTS, MODALS ---
-        const eventModalOverlay = document.getElementById('event-modal-overlay');
-        const drawingModalOverlay = document.getElementById('drawing-modal-overlay');
-        const customPointModal = document.getElementById('custom-point-modal-overlay');
-        let currentModalLog = null;
-        
-        // Event Modal
+         }
         function openEventModal(log, coordinates) {
-            currentModalLog = { log: log, coordinates: coordinates };
+             currentModalLog = { log: log, coordinates: coordinates };
             document.getElementById('modal-title').textContent = log.name || 'Деталі події';
             document.getElementById('modal-coords').textContent = `${coordinates[0].toFixed(5)}, ${coordinates[1].toFixed(5)}`;
             const eventDate = new Date(log.timestamp);
             document.getElementById('modal-datetime').textContent = eventDate.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
             document.getElementById('modal-comment').textContent = log.comment || 'Немає';
             eventModalOverlay.classList.add('visible');
-        }
-
-        function closeEventModal() {
+         }
+        function closeEventModal() { 
             eventModalOverlay.classList.remove('visible');
             currentModalLog = null;
             map.off('click');
@@ -1158,10 +1121,11 @@
         }
         document.getElementById('modal-close-button').addEventListener('click', closeEventModal);
         eventModalOverlay.addEventListener('click', (e) => { if (e.target === eventModalOverlay) closeEventModal(); });
-        
-        // Drawing from event modal
-        function startDrawingFromEvent(type) {
-             if (!currentModalLog) return;
+        document.getElementById('modal-draw-arrow').addEventListener('click', () => startDrawingFromEvent('arrow'));
+        document.getElementById('modal-draw-line').addEventListener('click', () => startDrawingFromEvent('line'));
+
+        function startDrawingFromEvent(type) { 
+            if (!currentModalLog) return;
             closeEventModal();
             document.getElementById('map').classList.add('map-placement-mode');
             const startPoint = currentModalLog.coordinates;
@@ -1175,197 +1139,172 @@
                     line.setStyle({ dashArray: '5, 10' });
                 }
                 document.getElementById('map').classList.remove('map-placement-mode');
-                currentModalLog = null;
             });
         }
-        document.getElementById('modal-draw-arrow').addEventListener('click', () => startDrawingFromEvent('arrow'));
-        document.getElementById('modal-draw-line').addEventListener('click', () => startDrawingFromEvent('line'));
-
-        // Drawing Modal
-        document.getElementById('draw-button').addEventListener('click', () => drawingModalOverlay.classList.add('visible'));
+        
         document.getElementById('drawing-modal-close-button').addEventListener('click', () => drawingModalOverlay.classList.remove('visible'));
         drawingModalOverlay.addEventListener('click', (e) => { if (e.target === drawingModalOverlay) drawingModalOverlay.classList.remove('visible'); });
+        
+        function getGpsLocation() {
+            navigator.geolocation.getCurrentPosition(pos => map.flyTo([pos.coords.latitude, pos.coords.longitude], 13), 
+            () => console.error("GPS Error"));
+        }
+        function exportGeoJson() {
+            const allFeatures = [
+                ...customPointsLayer.toGeoJSON().features,
+                ...drawingsLayer.toGeoJSON().features,
+                ...Object.values(fileLayerGroups).flatMap(lg => lg.toGeoJSON().features),
+                ...(intersectionClusterGroup ? intersectionClusterGroup.toGeoJSON().features : [])
+            ];
+            if(allFeatures.length === 0) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ type: "FeatureCollection", features: allFeatures }, null, 2));
+            const dl = document.createElement('a');
+            dl.href = dataStr;
+            dl.download = `map_export_${new Date().toISOString().slice(0,10)}.geojson`;
+            dl.click();
+            dl.remove();
+        }
 
-        document.getElementById('drawing-options').addEventListener('click', (e) => {
-            const button = e.target.closest('.draw-option-button');
-            if (!button) return;
-            const drawType = button.dataset.drawType;
-            drawingModalOverlay.classList.remove('visible');
-            if (drawType === 'flexible-line') {
-                initiateFlexibleDrawing(drawType);
+        // --- NEW TOOLBAR MANAGEMENT ---
+        function saveButtonConfig() {
+            localStorage.setItem('visibleButtonIds', JSON.stringify(visibleButtonIds));
+        }
+
+        function loadButtonConfig() {
+            const savedConfig = localStorage.getItem('visibleButtonIds');
+            if (savedConfig) {
+                visibleButtonIds = JSON.parse(savedConfig);
             } else {
-                initiateStandardDrawing(drawType);
+                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button'];
             }
-        });
-
-        function initiateStandardDrawing(drawType) {
-            document.getElementById('map').classList.add('map-placement-mode');
-            map.once('click', (e1) => {
-                const startPoint = e1.latlng;
-                const startMarker = L.circleMarker(startPoint, { color: 'var(--accent-color)', radius: 5, weight: 2 }).addTo(map);
-                map.once('click', (e2) => {
-                    const endPoint = e2.latlng;
-                    drawDecoratedPolyline([startPoint, endPoint], drawType);
-                    document.getElementById('map').classList.remove('map-placement-mode');
-                    map.removeLayer(startMarker);
-                });
-            });
         }
 
-        function initiateFlexibleDrawing(drawType) {
-            document.getElementById('map').classList.add('map-placement-mode');
-            const points = [];
-            const tempMarkers = L.layerGroup().addTo(map);
-            map.once('click', (e1) => {
-                points.push(e1.latlng);
-                tempMarkers.addLayer(L.circleMarker(e1.latlng, { color: 'var(--accent-color)', radius: 5, weight: 2 }));
-                map.once('click', (e2) => {
-                    points.push(e2.latlng);
-                    tempMarkers.addLayer(L.circleMarker(e2.latlng, { color: 'var(--accent-color)', radius: 5, weight: 2 }));
-                    map.once('click', (e3) => {
-                        points.push(e3.latlng);
-                        drawDecoratedPolyline(points, drawType);
-                        document.getElementById('map').classList.remove('map-placement-mode');
-                        tempMarkers.clearLayers();
-                    });
-                });
+        function renderVisibleButtons() {
+            actionButtonsContainer.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            visibleButtonIds.forEach((id, index) => {
+                const template = buttonTemplates.querySelector(`#${id}`);
+                if (template) {
+                    const newButton = template.cloneNode(true);
+                    attachButtonListener(newButton);
+                    newButton.style.top = `${60 + (index * (40 + 8))}px`;
+                    newButton.style.right = '10px';
+                    makeDraggable(newButton);
+                    fragment.appendChild(newButton);
+                }
             });
+            actionButtonsContainer.appendChild(fragment);
         }
 
-        function drawDecoratedPolyline(latlngs, type) {
-            const selectedColor = document.getElementById('drawing-color-picker').value;
-            const polyline = L.polyline(latlngs, { color: selectedColor, weight: 3 }).addTo(drawingsLayer);
-
-            switch (type) {
-                case 'arrow':
-                    L.polylineDecorator(polyline, { patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: selectedColor } }) }] }).addTo(drawingsLayer);
-                    break;
-                case 'repeating-arrow':
-                    L.polylineDecorator(polyline, { patterns: [{ repeat: 80, symbol: L.Symbol.arrowHead({ pixelSize: 12, pathOptions: { color: selectedColor, fillOpacity: 1, weight: 0 }}) }] }).addTo(drawingsLayer);
-                    break;
-                case 'animated-arrow':
-                    const animatedArrowDecorator = L.polylineDecorator(polyline, { patterns: [{ offset: 0, repeat: 150, symbol: L.Symbol.arrowHead({ pixelSize: 12, pathOptions: { color: selectedColor, fillOpacity: 1, weight: 0 }}) }] }).addTo(drawingsLayer);
-                    let arrowOffset = 0;
-                    setInterval(() => {
-                        arrowOffset = (arrowOffset + 1) % 150;
-                        animatedArrowDecorator.setPatterns([{ offset: arrowOffset, repeat: 150, symbol: L.Symbol.arrowHead({ pixelSize: 12, pathOptions: { color: selectedColor, fillOpacity: 1, weight: 0 }}) }]);
-                    }, 80);
-                    break;
-                case 'dashed-line':
-                    polyline.setStyle({ dashArray: '10, 10' });
-                    break;
-                case 'animated-ants':
-                    polyline.setStyle({ opacity: 0.5 });
-                    const decorator = L.polylineDecorator(polyline, { patterns: [{ offset: 0, repeat: '20px', symbol: L.Symbol.dash({ pixelSize: 10, pathOptions: { color: 'white', weight: 2, opacity: 0.9 }}) }] }).addTo(drawingsLayer);
-                    let offset = 0;
-                    setInterval(() => {
-                        offset = (offset + 1) % 20;
-                        decorator.setPatterns([{ offset: offset, repeat: '20px', symbol: L.Symbol.dash({ pixelSize: 10, pathOptions: { color: 'white', weight: 2, opacity: 0.9 }}) }]);
-                    }, 100);
-                    break;
-                case 'icon-line':
-                    const customIcon = L.icon({ iconUrl: 'https://img.icons8.com/color/48/marker.png', iconSize: [32, 32], iconAnchor: [16, 32] });
-                    L.polylineDecorator(polyline, { patterns: [{ repeat: 150, symbol: L.Symbol.marker({ markerOptions: { icon: customIcon } }) }] }).addTo(drawingsLayer);
-                    break;
+        function populateSettingsModal() {
+            const list = document.getElementById('toolbar-button-list');
+            list.innerHTML = '';
+            AVAILABLE_BUTTONS.forEach(buttonInfo => {
+                const isVisible = visibleButtonIds.includes(buttonInfo.id);
+                const li = document.createElement('li');
+                li.className = 'toolbar-button-item';
+                li.innerHTML = `
+                    <label>
+                        <i class="${buttonInfo.icon}"></i>
+                        <span>${buttonInfo.title}</span>
+                    </label>
+                    <label class="switch">
+                        <input type="checkbox" data-id="${buttonInfo.id}" ${isVisible ? 'checked' : ''}>
+                        <span class="slider"></span>
+                    </label>
+                `;
+                list.appendChild(li);
+                if (buttonInfo.id === 'install-button' && !deferredPrompt) {
+                    li.style.display = 'none';
+                }
+            });
+        }
+        
+        function attachButtonListener(button) {
+            switch(button.id) {
+                case 'theme-toggle-button': button.addEventListener('click', () => toggleTheme()); break;
+                case 'sync-button': button.addEventListener('click', () => fetchDataFromSheet(false)); break;
+                case 'deepstate-button': button.addEventListener('click', openDeepStateOverlay); break;
+                case 'add-point-button': button.addEventListener('click', () => {
+                    populateIconCollectionGrid();
+                    customPointModal.classList.add('visible');
+                }); break;
+                case 'draw-button': button.addEventListener('click', () => drawingModalOverlay.classList.add('visible')); break;
+                case 'gps-button': button.addEventListener('click', getGpsLocation); break;
+                case 'upload-button': button.addEventListener('click', () => logFileInput.click()); break;
+                case 'export-button': button.addEventListener('click', exportGeoJson); break;
+                case 'install-button': button.addEventListener('click', async () => {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        await deferredPrompt.userChoice;
+                        deferredPrompt = null;
+                    }
+                }); break;
             }
         }
         
-        // Custom Point Modal
-        document.getElementById('add-point-button').addEventListener('click', () => customPointModal.classList.add('visible'));
+        toolbarSettingsButton.addEventListener('click', () => {
+            populateSettingsModal();
+            toolbarSettingsModal.classList.add('visible');
+        });
+
+        toolbarSettingsModal.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay') || e.target.classList.contains('modal-close')) {
+                toolbarSettingsModal.classList.remove('visible');
+            }
+            if (e.target.matches('input[type="checkbox"]')) {
+                const buttonId = e.target.dataset.id;
+                if (e.target.checked) {
+                    if (!visibleButtonIds.includes(buttonId)) visibleButtonIds.push(buttonId);
+                } else {
+                    visibleButtonIds = visibleButtonIds.filter(id => id !== buttonId);
+                }
+                saveButtonConfig();
+                renderVisibleButtons();
+            }
+        });
+
+        // --- CUSTOM POINT MODAL LOGIC (RESTORED & IMPROVED) ---
         document.getElementById('custom-point-modal-close-button').addEventListener('click', () => customPointModal.classList.remove('visible'));
-        customPointModal.addEventListener('click', (e) => { if (e.target === customPointModal) customPointModal.classList.remove('visible'); });
+        customPointModal.addEventListener('click', (e) => { if(e.target === customPointModal) customPointModal.classList.remove('visible')});
+
+        document.querySelectorAll('input[name="point-coord-source"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                const manualGroup = document.getElementById('manual-coords-group');
+                manualGroup.style.display = radio.value === 'manual' ? 'flex' : 'none';
+                document.getElementById('place-point-submit').textContent = radio.value === 'manual' ? 'Розмістити точку' : 'Обрати на карті';
+            });
+        });
 
         document.querySelectorAll('input[name="point-icon-source"]').forEach(radio => {
             radio.addEventListener('change', () => {
-                const selected = document.querySelector('input[name="point-icon-source"]:checked').value;
+                const selected = radio.value;
                 document.getElementById('point-url-source-group').style.display = selected === 'url' ? 'block' : 'none';
                 document.getElementById('point-file-source-group').style.display = selected === 'file' ? 'block' : 'none';
-            });
-        });
-
-        document.querySelectorAll('input[name="icon-background-processing"]').forEach(radio => {
-            radio.addEventListener('change', () => {
-                const selected = document.querySelector('input[name="icon-background-processing"]:checked').value;
-                document.getElementById('circle-bg-color-group').style.display = selected === 'circle-bg' ? 'block' : 'none';
+                document.getElementById('icon-collection-container').style.display = selected === 'collection' ? 'block' : 'none';
+                document.getElementById('icon-processing-group').style.display = (selected === 'url' || selected === 'file') ? 'block' : 'none';
             });
         });
         
-        document.getElementById('place-point-submit').addEventListener('click', () => {
-            const name = document.getElementById('point-name-input').value.trim() || "Без назви";
-            const sourceType = document.querySelector('input[name="point-icon-source"]:checked').value;
-            const backgroundProcessingType = document.querySelector('input[name="icon-background-processing"]:checked').value;
-            const circleBgColor = document.getElementById('circle-bg-color-picker').value;
-            
-            let iconUrlPromise;
-
-            switch (sourceType) {
-                case 'url':
-                    const url = document.getElementById('point-url-input').value.trim();
-                    if (!url) { console.warn('Please provide an icon URL.'); return; }
-                    iconUrlPromise = Promise.resolve(url);
-                    break;
-                case 'file':
-                    const file = document.getElementById('point-file-input').files[0];
-                    if (!file) { console.warn('Please select an icon file.'); return; }
-                    iconUrlPromise = new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = e => resolve(e.target.result);
-                        reader.onerror = reject;
-                        reader.readAsDataURL(file);
-                    });
-                    break;
-                default:
-                    const defaultIcon = L.divIcon({
-                        className: 'fa-solid fa-map-pin',
-                        iconSize: [24, 24],
-                        html: `<i class="fa-solid fa-map-pin" style="font-size: 24px; color: var(--accent-color); text-shadow: 0 0 3px rgba(0,0,0,0.5);"></i>`
-                    });
-                    startMarkerPlacement(name, defaultIcon);
-                    return;
-            }
-
-            iconUrlPromise.then(url => {
-                return processImageForIcon(url, backgroundProcessingType, circleBgColor);
-            }).then(processedDataUrl => {
-                const finalIcon = L.icon({
-                    iconUrl: processedDataUrl,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 32],
-                    popupAnchor: [0, -32]
-                });
-                startMarkerPlacement(name, finalIcon);
-            }).catch(err => {
-                console.error("Icon creation or processing failed:", err);
-            });
-        });
-
-        function processImageForIcon(imageUrl, processingType, bgColor) {
+        function processImageForIcon(imageUrl, processingType) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-                    const size = 32;
+                    const size = 48; 
                     canvas.width = size;
                     canvas.height = size;
-
-                    if (processingType === 'circle-bg') {
-                        ctx.beginPath();
-                        ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-                        ctx.fillStyle = bgColor;
-                        ctx.fill();
-                        ctx.clip();
-                    }
 
                     ctx.drawImage(img, 0, 0, size, size);
 
                     if (processingType === 'white-to-transparent') {
                         const imageData = ctx.getImageData(0, 0, size, size);
-                        const pixels = imageData.data;
-                        for (let i = 0; i < pixels.length; i += 4) {
-                            if (pixels[i] > 240 && pixels[i + 1] > 240 && pixels[i + 2] > 240) {
-                                pixels[i + 3] = 0;
+                        const data = imageData.data;
+                        for (let i = 0; i < data.length; i += 4) {
+                            if (data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240) {
+                                data[i + 3] = 0; // Set alpha to 0
                             }
                         }
                         ctx.putImageData(imageData, 0, 0);
@@ -1377,22 +1316,69 @@
             });
         }
 
+        document.getElementById('place-point-submit').addEventListener('click', () => {
+            const name = document.getElementById('point-name-input').value.trim() || "Без назви";
+            const coordSource = document.querySelector('input[name="point-coord-source"]:checked').value;
+            const iconSource = document.querySelector('input[name="point-icon-source"]:checked').value;
+
+            let iconPromise;
+
+            switch (iconSource) {
+                case 'url':
+                case 'file':
+                    const processingType = document.querySelector('input[name="icon-background-processing"]:checked').value;
+                    let imageUrlPromise = iconSource === 'url'
+                        ? Promise.resolve(document.getElementById('point-url-input').value.trim())
+                        : new Promise((resolve, reject) => {
+                            const file = document.getElementById('point-file-input').files[0];
+                            if (!file) { reject('Файл не обрано'); return; }
+                            const reader = new FileReader();
+                            reader.onload = e => resolve(e.target.result);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(file);
+                        });
+
+                    iconPromise = imageUrlPromise
+                        .then(url => {
+                            if(!url) throw new Error("URL або файл порожні");
+                            return processImageForIcon(url, processingType)
+                        })
+                        .then(dataUrl => {
+                            saveCustomIcon(dataUrl);
+                            return L.icon({ iconUrl: dataUrl, iconSize: [32, 32], iconAnchor: [16, 32] });
+                        });
+                    break;
+                
+                case 'collection':
+                    const selectedIcon = document.querySelector('.icon-collection-item.selected');
+                    if (!selectedIcon) { alert('Будь ласка, оберіть іконку з колекції.'); return Promise.reject(); }
+                    iconPromise = Promise.resolve(L.icon({ iconUrl: selectedIcon.src, iconSize: [32, 32], iconAnchor: [16, 32] }));
+                    break;
+
+                default: // 'default'
+                    iconPromise = Promise.resolve(L.divIcon({ className: 'fa-solid fa-map-pin', iconSize: [24, 24], html: `<i class="fa-solid fa-map-pin" style="font-size: 24px; color: var(--accent-color);"></i>` }));
+                    break;
+            }
+
+            iconPromise.then(finalIcon => {
+                if (coordSource === 'manual') {
+                    const lat = parseFloat(document.getElementById('point-lat-input').value);
+                    const lng = parseFloat(document.getElementById('point-lng-input').value);
+                    if (isNaN(lat) || isNaN(lng)) { alert('Будь ласка, введіть коректні координати.'); return; }
+                    startMarkerPlacement(name, finalIcon, L.latLng(lat, lng));
+                } else {
+                    startMarkerPlacement(name, finalIcon, null);
+                }
+            }).catch(error => {
+                console.error("Помилка створення іконки:", error);
+                alert("Не вдалося створити іконку. Перевірте посилання або файл.");
+            });
+        });
+        
         function startMarkerPlacement(name, icon, latlng = null) {
             const placeMarker = (pos) => {
-                const marker = L.marker(pos, { icon: icon, draggable: true }).addTo(customPointsLayer);
-                const timestamp = new Date();
-                const popupContent = `<b>${name}</b><hr style="margin: 5px 0;"><b>Координати:</b><br>${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}<br><b>Дата:</b> ${timestamp.toLocaleDateString('uk-UA')}<br><b>Час:</b> ${timestamp.toLocaleTimeString('uk-UA')}`;
-                marker.bindPopup(popupContent).openPopup();
-                
-                // Reset form
-                document.getElementById('point-name-input').value = '';
-                document.getElementById('point-url-input').value = '';
-                document.getElementById('point-file-input').value = null;
-                document.querySelector('input[name="point-icon-source"][value="default"]').checked = true;
-                document.querySelector('input[name="icon-background-processing"][value="none"]').checked = true;
-                document.getElementById('point-url-source-group').style.display = 'none';
-                document.getElementById('point-file-source-group').style.display = 'none';
-                document.getElementById('circle-bg-color-group').style.display = 'none';
+                L.marker(pos, { icon: icon, draggable: true }).addTo(customPointsLayer)
+                    .bindPopup(`<b>${name}</b><br>Коорд: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`).openPopup();
                 document.getElementById('map').classList.remove('map-placement-mode');
             };
 
@@ -1404,72 +1390,56 @@
                 map.once('click', (e) => placeMarker(e.latlng));
             }
         }
-
-
-        // --- 🛠️ HELPER & OTHER BUTTON FUNCTIONS ---
-        document.getElementById('gps-button').addEventListener('click', () => {
-            navigator.geolocation.getCurrentPosition(pos => {
-                map.flyTo([pos.coords.latitude, pos.coords.longitude], 13);
-            }, () => console.error("GPS Error: Could not get position."));
-        });
-
-        document.getElementById('export-button').addEventListener('click', () => {
-            const allFeatures = [
-                ...customPointsLayer.toGeoJSON().features,
-                ...drawingsLayer.toGeoJSON().features,
-                ...Object.values(fileLayerGroups).flatMap(lg => lg.toGeoJSON().features),
-                ...(intersectionClusterGroup ? intersectionClusterGroup.toGeoJSON().features : [])
-            ];
-            if(allFeatures.length === 0) {
-                console.warn("No data to export.");
+        
+        // --- ICON COLLECTION LOGIC ---
+        function loadCustomIcons() {
+            const saved = localStorage.getItem('customIconCollection');
+            if (saved) {
+                customIconCollection = JSON.parse(saved);
+            }
+        }
+        function saveCustomIcon(dataUrl) {
+            if (!customIconCollection.includes(dataUrl)) {
+                customIconCollection.unshift(dataUrl); // Add to beginning
+                localStorage.setItem('customIconCollection', JSON.stringify(customIconCollection));
+            }
+        }
+        function populateIconCollectionGrid() {
+            const grid = document.getElementById('icon-collection-grid');
+            grid.innerHTML = '';
+            if (customIconCollection.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-color); font-size: 12px; opacity: 0.7;">Ваша колекція порожня. Додайте іконку по URL або з файлу, щоб зберегти її тут.</p>';
                 return;
             }
+            customIconCollection.forEach(dataUrl => {
+                const img = document.createElement('img');
+                img.src = dataUrl;
+                img.className = 'icon-collection-item';
+                img.onclick = () => {
+                    document.querySelectorAll('.icon-collection-item.selected').forEach(el => el.classList.remove('selected'));
+                    img.classList.add('selected');
+                };
+                grid.appendChild(img);
+            });
+        }
 
-            const featureCollection = { type: "FeatureCollection", features: allFeatures };
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(featureCollection, null, 2));
-            const dl = document.createElement('a');
-            dl.setAttribute("href", dataStr);
-            dl.setAttribute("download", `map_export_${new Date().toISOString().slice(0,10)}.geojson`);
-            document.body.appendChild(dl);
-            dl.click();
-            dl.remove();
-        });
-
-        function filterForIntersection(logs) { return logs.filter(log => log.name && log.azimuth && log.distance && (parseAzimuth(log.azimuth)[1] - parseAzimuth(log.azimuth)[0]) <= 10); }
-        function generateHslColor(index, total) { const hue = (index * (360 / total)) % 360; return `hsl(${hue}, 70%, 50%)`; }
-        function parseAzimuth(az) { if (typeof az === 'string' && az.includes('-')) return az.split('-').map(Number); return [Number(az), Number(az)]; }
-        function getDestPoint(lat, lon, brng, dist) { const R = 6371e3; const l1 = lat * Math.PI / 180, n1 = lon * Math.PI / 180, b = brng * Math.PI / 180; const l2 = Math.asin(Math.sin(l1) * Math.cos(dist / R) + Math.cos(l1) * Math.sin(dist / R) * Math.cos(b)); const n2 = n1 + Math.atan2(Math.sin(b) * Math.sin(dist / R) * Math.cos(l1), Math.cos(dist / R) - Math.sin(l1) * Math.sin(l2)); return [l2 * 180 / Math.PI, n2 * 180 / Math.PI]; }
-        function findIntersection(logA, logB) { const azA = (parseAzimuth(logA.azimuth)[0] + parseAzimuth(logA.azimuth)[1]) / 2; const azB = (parseAzimuth(logB.azimuth)[0] + parseAzimuth(logB.azimuth)[1]) / 2; const p1 = logA.originCoordinates, p3 = logB.originCoordinates; const p2 = getDestPoint(p1.lat, p1.lon, azA, 10000), p4 = getDestPoint(p3.lat, p3.lon, azB, 10000); const x1 = p1.lon, y1 = p1.lat, x2 = p2[1], y2 = p2[0], x3 = p3.lon, y3 = p3.lat, x4 = p4[1], y4 = p4[0]; const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4); if (den === 0) return null; const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den; const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den; if (t > 0 && u > 0) return [y1 + t * (y2 - y1), x1 + t * (x2 - x1)]; return null; }
-        function calculateDistance(lat1, lon1, lat2, lon2) { const R = 6371e3; const p1 = lat1 * Math.PI / 180, p2 = lat2 * Math.PI / 180; const dP = (lat2 - lat1) * Math.PI / 180, dL = (lon2 - lon1) * Math.PI / 180; const a = Math.sin(dP / 2) * Math.sin(dP / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dL / 2) * Math.sin(dL / 2); const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); return R * c; }
 
         // --- APPLICATION STARTUP ---
         window.addEventListener('load', () => {
-            const buttonsToDrag = document.querySelectorAll('#action-buttons .action-button');
-            buttonsToDrag.forEach((button, index) => {
-                button.style.top = `${10 + (index * (40 + 8))}px`;
-                button.style.right = '10px';
-                makeDraggable(button);
-            });
+            loadCustomIcons();
+            loadButtonConfig();
+            renderVisibleButtons();
             
             const savedTheme = localStorage.getItem('theme');
-            if (savedTheme) { 
-                toggleTheme(savedTheme); 
-            } else {
-                toggleTheme('light');
-            }
+            toggleTheme(savedTheme || 'light');
+            
             fetchDataFromSheet();
             setInterval(() => fetchDataFromSheet(true), 30000);
         });
         
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
+                navigator.serviceWorker.register('/sw.js').then(r => console.log('SW registered')).catch(e => console.log('SW reg failed', e));
             });
         }
     </script>
