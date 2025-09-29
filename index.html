@@ -7,7 +7,6 @@
 
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <link href="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro@2.9.6/build/vanilla-calendar.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
@@ -31,6 +30,7 @@
             --shadow-color: rgba(0, 0, 0, 0.1);
             --text-color: #2c2c2c;
             --accent-color: #007aff;
+            --record-color: #ff3b30;
             --transition-speed: 0.3s;
             --main-bg: #eef1f4;
             --icon-shadow: 0 1px 4px rgba(0,0,0,0.5);
@@ -94,8 +94,8 @@
         }
         #toolbar-settings-button {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
+            top: 10px;
+            right: 10px;
             z-index: 1001;
         }
 
@@ -134,6 +134,17 @@
         .action-button:hover {
             color: var(--accent-color);
             transform: scale(1.1);
+        }
+
+        .action-button.recording {
+            color: var(--record-color);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
         #sync-badge {
@@ -217,11 +228,11 @@
         #calendar-column { flex-basis: 300px; flex-grow: 0; }
 
         /* --- EVENTS AND LAYERS LIST --- */
-        #events-list { list-style: none; padding: 0; margin: 0; }
-        #events-list li { padding: 10px 8px; font-size: 14px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; color: var(--text-color); }
+        #events-list { list-style: none; padding: 0; margin: 0; }
+        #events-list li { padding: 10px 8px; font-size: 14px; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; color: var(--text-color); }
         body.dark-theme #events-list li { color: var(--text-color); }
-        #events-list li:hover, #events-list li.highlighted { background-color: rgba(0, 122, 255, 0.1); }
-        .layer-legend-color { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 3px; vertical-align: middle;}
+        #events-list li:hover, #events-list li.highlighted { background-color: rgba(0, 122, 255, 0.1); }
+        .layer-legend-color { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 3px; vertical-align: middle;}
 
         /* --- MODALS --- */
         .modal-overlay {
@@ -277,28 +288,28 @@
         
         #modal-info p { margin: 8px 0; color: var(--text-color); }
         body.dark-theme #modal-info p { color: var(--text-color); }
-        #modal-info p strong { color: #555; }
+        #modal-info p strong { color: #555; }
         body.dark-theme #modal-info p strong { color: #aaa; }
-        #modal-actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 15px;
-            border-top: 1px solid var(--border-color);
-            padding-top: 15px;
-        }
-        #modal-actions button {
-            border: none;
-            background: var(--accent-color);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background-color 0.2s;
-        }
-        #modal-actions button:hover {
-            background-color: #0056b3;
-        }
+        #modal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+        #modal-actions button {
+            border: none;
+            background: var(--accent-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        #modal-actions button:hover {
+            background-color: #0056b3;
+        }
 
         /* --- TOOLBAR SETTINGS MODAL --- */
         #toolbar-button-list {
@@ -350,7 +361,7 @@
             background: transparent; color: var(--text-color); border-radius: 6px; font-size: 14px;
         }
         .source-toggle {
-            display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-around;
+            display: flex; gap: 15px; justify-content: space-around;
             background-color: rgba(0,0,0,0.05); padding: 8px; border-radius: 6px;
         }
         #manual-coords-group {
@@ -363,7 +374,7 @@
             margin-top: 15px; transition: background-color 0.2s;
         }
 
-        #icon-collection-grid, #military-icon-grid {
+        #icon-collection-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
             gap: 10px;
@@ -373,7 +384,7 @@
             background: rgba(0,0,0,0.05);
             border-radius: 8px;
         }
-        .icon-collection-item, .military-icon-item {
+        .icon-collection-item {
             width: 40px;
             height: 40px;
             object-fit: contain;
@@ -382,87 +393,29 @@
             border-radius: 6px;
             padding: 2px;
             transition: border-color 0.2s;
-            background-color: rgba(255,255,255,0.5);
         }
-         body.dark-theme .icon-collection-item, body.dark-theme .military-icon-item {
-             background-color: rgba(0,0,0,0.2);
-         }
-
-        .icon-collection-item.selected, .military-icon-item.selected {
+        .icon-collection-item.selected {
             border-color: var(--accent-color);
         }
-        #military-icon-categories {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-            margin-bottom: 10px;
+         #drawing-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
-        .category-button {
-            padding: 4px 8px;
-            border: 1px solid var(--border-color);
-            background: transparent;
-            color: var(--text-color);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
+        .draw-option-button {
+            background-color: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 8px; padding: 15px; cursor: pointer; font-size: 14px;
+            font-family: 'Inter', sans-serif; color: var(--text-color); display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            gap: 10px; transition: background-color 0.2s, transform 0.2s; text-align: center;
         }
-        .category-button.active {
-            background-color: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
-        }
-        
-        #drawing-toolbar, #mortar-toolbar {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1002;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            padding: 5px;
-        }
-        .draw-tool-button {
-            width: 36px;
-            height: 36px;
-            background: none;
-            border: none;
-            font-size: 16px;
-            color: var(--text-color);
-            cursor: pointer;
-            border-radius: 6px;
-            transition: background-color 0.2s;
-        }
-        .draw-tool-button:hover {
-            background-color: rgba(128,128,128,0.2);
-        }
-        .draw-tool-button.active {
-            background-color: var(--accent-color);
-            color: white;
-        }
-        #drawing-color-picker { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 28px; height: 28px; background-color: transparent; border: none; cursor: pointer; }
-        #drawing-color-picker::-webkit-color-swatch { border-radius: 50%; border: 2px solid var(--border-color); }
-        .distance-label {
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            color: var(--text-color);
-            font-weight: bold;
-            box-shadow: 0 1px 5px var(--shadow-color);
-            padding: 4px 8px;
-        }
-        
-        #measurement-display {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1002;
-            padding: 5px 10px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
+        .draw-option-button:hover { background-color: rgba(0, 122, 255, 0.1); border-color: var(--accent-color); transform: translateY(-2px); }
+        .draw-option-button i { font-size: 24px; color: var(--accent-color); }
+        .color-picker-container { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 20px; padding: 10px; background-color: rgba(0,0,0,0.05); border-radius: 8px; }
+        .color-picker-container label { font-weight: 500; }
+        #drawing-color-picker { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 40px; height: 40px; background-color: transparent; border: none; cursor: pointer; }
+        #drawing-color-picker::-webkit-color-swatch { border-radius: 50%; border: 2px solid rgba(0,0,0,0.2); }
 
         /* --- Iframe Overlay Fullscreen --- */
         .iframe-container {
@@ -544,7 +497,6 @@
         .leaflet-control-layers { border: 1px solid var(--border-color) !important; background: var(--bg-color) !important; -webkit-backdrop-filter: var(--blur-effect); backdrop-filter: var(--blur-effect); box-shadow: 0 2px 10px var(--shadow-color) !important; color: var(--text-color) !important; }
         body.dark-theme .leaflet-control-layers { color: var(--text-color); }
         body.dark-theme .leaflet-control-layers-toggle { background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f5f5f7"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important; }
-        .leaflet-routing-container { display: none !important; }
         
         /* --- RESPONSIVENESS --- */
         @media (max-width: 768px) {
@@ -577,9 +529,8 @@
         <button id="deepstate-button" class="action-button" title="Наложение на DeepState Map"><i class="fa-solid fa-layer-group"></i></button>
         <button id="add-point-button" class="action-button" title="Додати власну точку"><i class="fa-solid fa-map-pin"></i></button>
         <button id="draw-button" class="action-button" title="Інструменти малювання"><i class="fa-solid fa-pencil-ruler"></i></button>
-        <button id="measure-button" class="action-button" title="Виміряти відстань"><i class="fa-solid fa-ruler-horizontal"></i></button>
-        <button id="mortar-button" class="action-button" title="Дальність міномета"><i class="fa-solid fa-bullseye"></i></button>
         <button id="gps-button" class="action-button" title="Знайти моє місцеположення"><i class="fa-solid fa-location-crosshairs"></i></button>
+        <button id="route-recorder-button" class="action-button" title="Запис маршруту"><i class="fa-solid fa-route"></i></button>
         <button id="upload-button" class="action-button" title="Завантажити логи"><i class="fa-solid fa-upload"></i></button>
         <button id="export-button" class="action-button" title="Експорт (GeoJSON)"><i class="fa-solid fa-file-export"></i></button>
         <button id="install-button" class="action-button" title="Встановити додаток"><i class="fa-solid fa-download"></i></button>
@@ -599,9 +550,9 @@
     <div id="iframe-overlay" class="modal-overlay">
         <div class="iframe-container">
              <div class="iframe-controls">
-                 <button id="transfer-coords-button" class="iframe-button" title="Перенести координати з центру екрана"><i class="fa-solid fa-crosshairs"></i> Перенести</button>
-                 <button id="iframe-close-button" class="iframe-button" title="Закрити"><i class="fa-solid fa-xmark"></i></button>
-             </div>
+                <button id="transfer-coords-button" class="iframe-button" title="Перенести координати з центру екрана"><i class="fa-solid fa-crosshairs"></i> Перенести</button>
+                <button id="iframe-close-button" class="iframe-button" title="Закрити"><i class="fa-solid fa-xmark"></i></button>
+            </div>
             <iframe id="deepstate-iframe" src="https://deepstatemap.live" frameborder="0"></iframe>
             <div id="leaflet-overlay-map"></div>
         </div>
@@ -610,24 +561,6 @@
     <input type="file" id="log-file-input" multiple accept=".json" style="display: none;">
     <div id="loader-overlay" class="hidden" style="display:none;"><div class="loader"></div></div>
     <div id="coords-display">Lat: 0.00000, Lng: 0.00000</div>
-    <div id="measurement-display" class="ui-element" style="display: none;"></div>
-    
-    <div id="drawing-toolbar" class="ui-element" style="display: none;">
-        <button class="draw-tool-button" data-draw-type="arrow" title="Стрілка"><i class="fa-solid fa-arrow-right"></i></button>
-        <button class="draw-tool-button" data-draw-type="line" title="Лінія"><i class="fa-solid fa-slash"></i></button>
-        <button class="draw-tool-button" data-draw-type="dashed" title="Пунктир"><i class="fa-solid fa-grip-lines"></i></button>
-        <button class="draw-tool-button" data-draw-type="rectangle" title="Прямокутник"><i class="fa-regular fa-square"></i></button>
-        <button class="draw-tool-button" data-draw-type="circle" title="Коло"><i class="fa-regular fa-circle"></i></button>
-        <input type="color" id="drawing-color-picker" value="#ff4747" title="Обрати колір">
-        <button class="draw-tool-button" id="undo-draw-button" title="Відмінити останню дію"><i class="fa-solid fa-undo-alt"></i></button>
-        <button class="draw-tool-button" id="close-draw-toolbar" title="Закрити"><i class="fa-solid fa-times"></i></button>
-    </div>
-
-    <div id="mortar-toolbar" class="ui-element" style="display: none;">
-        <button class="draw-tool-button" data-mortar-type="82mm">82мм</button>
-        <button class="draw-tool-button" data-mortar-type="120mm">120мм</button>
-        <button class="draw-tool-button" id="close-mortar-toolbar" title="Закрити"><i class="fa-solid fa-times"></i></button>
-    </div>
 
     <div id="toolbar-settings-modal-overlay" class="modal-overlay">
         <div class="modal-content">
@@ -653,7 +586,26 @@
             </div>
         </div>
     </div>
-    
+    <div id="drawing-modal-overlay" class="modal-overlay">
+         <div id="drawing-modal-content" class="modal-content" style="max-width: 600px;">
+            <button id="drawing-modal-close-button" class="modal-close">&times;</button>
+            <h3>Інструменти малювання</h3>
+            <p style="text-align: center; margin-top: -10px; opacity: 0.7;">Оберіть інструмент, колір, а потім клацніть на карті для малювання.</p>
+             <div class="color-picker-container">
+                <label for="drawing-color-picker">Колір:</label>
+                <input type="color" id="drawing-color-picker" value="#ff4747">
+            </div>
+            <div id="drawing-options">
+                <button class="draw-option-button" data-draw-type="arrow"><i class="fa-solid fa-arrow-right"></i><span>Стрілка</span></button>
+                <button class="draw-option-button" data-draw-type="repeating-arrow"><i class="fa-solid fa-angles-right"></i><span>Повтор. стрілки</span></button>
+                <button class="draw-option-button" data-draw-type="animated-arrow"><i class="fa-solid fa-play"></i><span>Анімована стрілка</span></button>
+                <button class="draw-option-button" data-draw-type="flexible-line"><i class="fa-solid fa-wave-square"></i><span>Вигнута лінія</span></button>
+                <button class="draw-option-button" data-draw-type="dashed-line"><i class="fa-solid fa-grip-lines"></i><span>Пунктир</span></button>
+                <button class="draw-option-button" data-draw-type="animated-ants"><i class="fa-solid fa-person-running"></i><span>Анімований пунктир</span></button>
+                <button class="draw-option-button" data-draw-type="icon-line"><i class="fa-solid fa-location-dot"></i><span>Лінія з іконками</span></button>
+            </div>
+        </div>
+    </div>
     <div id="custom-point-modal-overlay" class="modal-overlay">
         <div id="custom-point-modal-content" class="modal-content" style="max-width: 450px;">
             <button id="custom-point-modal-close-button" class="modal-close">&times;</button>
@@ -684,7 +636,6 @@
                 <div class="source-toggle">
                     <label><input type="radio" name="point-icon-source" value="default" checked> Стандартна</label>
                     <label><input type="radio" name="point-icon-source" value="collection"> З колекції</label>
-                    <label><input type="radio" name="point-icon-source" value="military"> З бібліотеки</label>
                     <label><input type="radio" name="point-icon-source" value="url"> URL</label>
                     <label><input type="radio" name="point-icon-source" value="file"> Файл</label>
                 </div>
@@ -692,14 +643,6 @@
             <div id="icon-collection-container" class="form-group" style="display: none;">
                 <label>Ваша колекція:</label>
                 <div id="icon-collection-grid"></div>
-            </div>
-            <div id="military-icon-container" class="form-group" style="display: none;">
-                <div id="military-icon-categories"></div>
-                 <div class="color-picker-container" style="display: flex; align-items: center; gap: 10px; margin-top:10px;">
-                     <label for="military-icon-color-picker" style="margin-bottom: 0;">Колір значка:</label>
-                     <input type="color" id="military-icon-color-picker" value="#0000FF" style="height: 25px; width: 25px; padding: 1px; border-radius: 4px; border: 1px solid var(--border-color); background-color: transparent;">
-                 </div>
-                <div id="military-icon-grid" style="margin-top: 10px;"></div>
             </div>
             <div id="point-url-source-group" class="form-group" style="display: none;">
                  <label for="point-url-input">Посилання на іконку:</label>
@@ -724,7 +667,6 @@
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vanilla-calendar-pro@2.9.6/build/vanilla-calendar.min.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
     <script>
         // --- Full application JavaScript ---
@@ -736,14 +678,13 @@
         let lastSyncRowCount = 0;
         let deferredPrompt;
         let customIconCollection = [];
-        let drawnItemsHistory = [];
-        let currentDrawHandler = null;
+        // NEW: Route recording variables
+        let isRecordingRoute = false;
+        let currentRoute = null;
+        let currentPositionMarker = null;
+        let routePoints = [];
+        let routeWatchId = null;
 
-        // --- NEW: Mortar Constants ---
-        const MORTAR_RANGES = {
-            '82mm': { min: 100, max: 4000 },
-            '120mm': { min: 480, max: 7100 }
-        };
 
         // --- Map and layers initialization ---
         const map = L.map('map', { zoomControl: false }).setView([50.41, 30.64], 11);
@@ -757,7 +698,6 @@
         // --- Feature Layers ---
         let customPointsLayer = L.layerGroup().addTo(map);
         let drawingsLayer = L.layerGroup().addTo(map);
-        let measurementLayer = L.layerGroup().addTo(map);
 
         // --- DOM Element References ---
         const loader = document.getElementById('loader-overlay');
@@ -768,8 +708,8 @@
         const topPanel = document.getElementById('top-panel');
         const coordsDisplay = document.getElementById('coords-display');
         const customPointModal = document.getElementById('custom-point-modal-overlay');
-        const drawingToolbar = document.getElementById('drawing-toolbar');
-        const mortarToolbar = document.getElementById('mortar-toolbar');
+        const drawingModalOverlay = document.getElementById('drawing-modal-overlay');
+        const drawingOptions = document.getElementById('drawing-options');
         let overlayMap = null;
         let overlayLayersGroup = L.layerGroup();
         
@@ -785,9 +725,8 @@
             { id: 'deepstate-button', title: 'DeepState', icon: 'fa-solid fa-layer-group' },
             { id: 'add-point-button', title: 'Додати точку', icon: 'fa-solid fa-map-pin' },
             { id: 'draw-button', title: 'Малювання', icon: 'fa-solid fa-pencil-ruler' },
-            { id: 'measure-button', title: 'Виміряти відстань', icon: 'fa-solid fa-ruler-horizontal' },
-            { id: 'mortar-button', title: 'Дальність міномета', icon: 'fa-solid fa-bullseye' },
             { id: 'gps-button', title: 'Моє місце', icon: 'fa-solid fa-location-crosshairs' },
+            { id: 'route-recorder-button', title: 'Запис маршруту', icon: 'fa-solid fa-route' }, // NEW
             { id: 'upload-button', title: 'Завантажити лог', icon: 'fa-solid fa-upload' },
             { id: 'export-button', title: 'Експорт', icon: 'fa-solid fa-file-export' },
             { id: 'install-button', title: 'Встановити', icon: 'fa-solid fa-download' }
@@ -976,7 +915,7 @@
         }
         
         function handleFileSelect(event) {
-            loader.style.display = 'flex'; // Full loader for file processing is ok
+            loader.style.display = 'flex';
             allLogsData = [];
             let logIdCounter = 0;
             const files = Array.from(event.target.files);
@@ -1049,8 +988,6 @@
             }
             overlayMaps[`<i class="fa-solid fa-map-pin" style="color:var(--accent-color);"></i> Мої точки`] = customPointsLayer;
             overlayMaps[`<i class="fa-solid fa-pencil" style="color:#f5a623;"></i> Малюнки`] = drawingsLayer;
-            overlayMaps[`<i class="fa-solid fa-ruler-horizontal" style="color:#FFD700;"></i> Вимірювання`] = measurementLayer;
-
 
             mapLayersControl = L.control.layers(null, overlayMaps, { collapsed: true }).addTo(map);
             
@@ -1183,16 +1120,16 @@
                 if (layer.getLatLngs) { L.polyline(layer.getLatLngs(), layer.options).addTo(overlayLayersGroup); }
                 else if (layer.getLatLng) { L.marker(layer.getLatLng(), layer.options).addTo(overlayLayersGroup); }
             });
-           }
+         }
         function openEventModal(log, coordinates) {
              currentModalLog = { log: log, coordinates: coordinates };
-             document.getElementById('modal-title').textContent = log.name || 'Деталі події';
-             document.getElementById('modal-coords').textContent = `${coordinates[0].toFixed(5)}, ${coordinates[1].toFixed(5)}`;
-             const eventDate = new Date(log.timestamp);
-             document.getElementById('modal-datetime').textContent = eventDate.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
-             document.getElementById('modal-comment').textContent = log.comment || 'Немає';
-             eventModalOverlay.classList.add('visible');
-           }
+            document.getElementById('modal-title').textContent = log.name || 'Деталі події';
+            document.getElementById('modal-coords').textContent = `${coordinates[0].toFixed(5)}, ${coordinates[1].toFixed(5)}`;
+            const eventDate = new Date(log.timestamp);
+            document.getElementById('modal-datetime').textContent = eventDate.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
+            document.getElementById('modal-comment').textContent = log.comment || 'Немає';
+            eventModalOverlay.classList.add('visible');
+         }
         function closeEventModal() { 
             eventModalOverlay.classList.remove('visible');
             currentModalLog = null;
@@ -1222,10 +1159,120 @@
             });
         }
         
-        function getGpsLocation() {
-            navigator.geolocation.getCurrentPosition(pos => map.flyTo([pos.coords.latitude, pos.coords.longitude], 13), 
-            () => console.error("GPS Error"));
+        // --- DRAWING TOOLS ACTIVATION ---
+        document.getElementById('drawing-modal-close-button').addEventListener('click', () => drawingModalOverlay.classList.remove('visible'));
+        drawingModalOverlay.addEventListener('click', (e) => { if (e.target === drawingModalOverlay) drawingModalOverlay.classList.remove('visible'); });
+        
+        drawingOptions.addEventListener('click', (e) => {
+            const button = e.target.closest('.draw-option-button');
+            if (!button) return;
+            const drawType = button.dataset.drawType;
+            const color = document.getElementById('drawing-color-picker').value;
+            drawingModalOverlay.classList.remove('visible');
+            startDrawingMode(drawType, color);
+        });
+
+        function startDrawingMode(type, color) {
+            document.getElementById('map').classList.add('map-placement-mode');
+            let points = [];
+            const onMapClick = (e) => {
+                points.push(e.latlng);
+                if (points.length === 2) {
+                    map.off('click', onMapClick);
+                    document.getElementById('map').classList.remove('map-placement-mode');
+                    const line = L.polyline(points, { color: color, weight: 3 }).addTo(drawingsLayer);
+                    switch (type) {
+                        case 'arrow': L.polylineDecorator(line, { patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: color } }) }] }).addTo(drawingsLayer); break;
+                        case 'repeating-arrow': L.polylineDecorator(line, { patterns: [{ offset: 15, repeat: 35, symbol: L.Symbol.arrowHead({ pixelSize: 10, pathOptions: { stroke: true, color: color } }) }] }).addTo(drawingsLayer); break;
+                        case 'animated-arrow': L.polylineDecorator(line, { patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: color } }) }] }).addTo(drawingsLayer);
+                        case 'animated-ants':
+                            line.setStyle({ dashArray: '5, 10' });
+                            let offset = 0;
+                            const animate = () => { if (!map.hasLayer(line)) return; line.setStyle({ dashOffset: offset-- }); requestAnimationFrame(animate); };
+                            animate();
+                            break;
+                        case 'dashed-line': line.setStyle({ dashArray: '5, 10' }); break;
+                        case 'icon-line': L.polylineDecorator(line, { patterns: [{ offset: 15, repeat: 60, symbol: L.Symbol.marker({ markerOptions: { icon: L.divIcon({ className: 'leaflet-decorated-icon', html: `<i class="fa-solid fa-location-dot" style="color: ${color}; font-size: 16px;"></i>` }) } }) }] }).addTo(drawingsLayer); break;
+                    }
+                }
+            };
+            map.on('click', onMapClick);
         }
+        
+        function getGpsLocation() {
+            navigator.geolocation.getCurrentPosition(pos => map.flyTo([pos.coords.latitude, pos.coords.longitude], 13), () => console.error("GPS Error"));
+        }
+
+        // --- NEW: ROUTE RECORDING LOGIC ---
+        function toggleRouteRecording() {
+            const button = document.querySelector('#action-buttons #route-recorder-button');
+            const icon = button.querySelector('i');
+
+            if (!isRecordingRoute) {
+                // Start recording
+                if (!navigator.geolocation) {
+                    alert("GPS-трекінг не підтримується вашим браузером.");
+                    return;
+                }
+                
+                isRecordingRoute = true;
+                routePoints = [];
+                button.classList.add('recording');
+                button.title = "Зупинити запис";
+                icon.className = 'fa-solid fa-stop';
+
+                routeWatchId = navigator.geolocation.watchPosition(
+                    (position) => {
+                        const latlng = [position.coords.latitude, position.coords.longitude];
+                        routePoints.push(latlng);
+
+                        if (!currentRoute) {
+                            currentRoute = L.polyline(routePoints, { color: 'var(--record-color)', weight: 4, opacity: 0.8 }).addTo(drawingsLayer);
+                        } else {
+                            currentRoute.setLatLngs(routePoints);
+                        }
+
+                        if (!currentPositionMarker) {
+                            currentPositionMarker = L.circle(latlng, {
+                                color: 'var(--record-color)',
+                                fillColor: '#fff',
+                                fillOpacity: 1,
+                                radius: 8,
+                                weight: 2
+                            }).addTo(map);
+                        } else {
+                            currentPositionMarker.setLatLng(latlng);
+                        }
+                        
+                        map.panTo(latlng);
+                    },
+                    (error) => {
+                        console.error("Помилка GPS:", error);
+                        alert("Не вдалося отримати GPS-координати.");
+                        toggleRouteRecording(); // Stop on error
+                    },
+                    { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
+                );
+
+            } else {
+                // Stop recording
+                isRecordingRoute = false;
+                navigator.geolocation.clearWatch(routeWatchId);
+                
+                button.classList.remove('recording');
+                button.title = "Запис маршруту";
+                icon.className = 'fa-solid fa-route';
+                
+                if(currentPositionMarker) {
+                    map.removeLayer(currentPositionMarker);
+                    currentPositionMarker = null;
+                }
+
+                currentRoute = null; // Reset for next recording
+                routeWatchId = null;
+            }
+        }
+
         function exportGeoJson() {
             const allFeatures = [
                 ...customPointsLayer.toGeoJSON().features,
@@ -1252,7 +1299,7 @@
             if (savedConfig) {
                 visibleButtonIds = JSON.parse(savedConfig);
             } else {
-                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button', 'measure-button'];
+                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button'];
             }
         }
 
@@ -1304,14 +1351,11 @@
                 case 'deepstate-button': button.addEventListener('click', openDeepStateOverlay); break;
                 case 'add-point-button': button.addEventListener('click', () => {
                     populateIconCollectionGrid();
-                    populateMilitaryIconCategories(); // NEW
-                    populateMilitaryIcons('Friendly'); // NEW
                     customPointModal.classList.add('visible');
                 }); break;
-                case 'draw-button': button.addEventListener('click', () => drawingToolbar.style.display = 'flex'); break;
-                case 'measure-button': button.addEventListener('click', startMeasurement); break;
-                case 'mortar-button': button.addEventListener('click', () => mortarToolbar.style.display = 'flex'); break; // FIXED
+                case 'draw-button': button.addEventListener('click', () => drawingModalOverlay.classList.add('visible')); break;
                 case 'gps-button': button.addEventListener('click', getGpsLocation); break;
+                case 'route-recorder-button': button.addEventListener('click', toggleRouteRecording); break; // NEW
                 case 'upload-button': button.addEventListener('click', () => logFileInput.click()); break;
                 case 'export-button': button.addEventListener('click', exportGeoJson); break;
                 case 'install-button': button.addEventListener('click', async () => {
@@ -1363,7 +1407,6 @@
                 document.getElementById('point-url-source-group').style.display = selected === 'url' ? 'block' : 'none';
                 document.getElementById('point-file-source-group').style.display = selected === 'file' ? 'block' : 'none';
                 document.getElementById('icon-collection-container').style.display = selected === 'collection' ? 'block' : 'none';
-                document.getElementById('military-icon-container').style.display = selected === 'military' ? 'block' : 'none';
                 document.getElementById('icon-processing-group').style.display = (selected === 'url' || selected === 'file') ? 'block' : 'none';
             });
         });
@@ -1436,17 +1479,6 @@
                     if (!selectedIcon) { alert('Будь ласка, оберіть іконку з колекції.'); return Promise.reject(); }
                     iconPromise = Promise.resolve(L.icon({ iconUrl: selectedIcon.src, iconSize: [32, 32], iconAnchor: [16, 32] }));
                     break;
-                
-                // NEW: Military Icon Case
-                case 'military':
-                    const selectedMilitaryIcon = document.querySelector('.military-icon-item.selected');
-                    if (!selectedMilitaryIcon) { alert('Будь ласка, оберіть військовий значок.'); return Promise.reject(); }
-                    const iconSVG = selectedMilitaryIcon.dataset.svg;
-                    const iconColor = document.getElementById('military-icon-color-picker').value;
-                    const coloredSVG = iconSVG.replace(/currentColor/g, iconColor);
-                    const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(coloredSVG);
-                    iconPromise = Promise.resolve(L.icon({ iconUrl: svgDataUrl, iconSize: [32, 32], iconAnchor: [16, 16] }));
-                    break;
 
                 default: // 'default'
                     iconPromise = Promise.resolve(L.divIcon({ className: 'fa-solid fa-map-pin', iconSize: [24, 24], html: `<i class="fa-solid fa-map-pin" style="font-size: 24px; color: var(--accent-color);"></i>` }));
@@ -1464,7 +1496,7 @@
                 }
             }).catch(error => {
                 console.error("Помилка створення іконки:", error);
-                if (error) alert("Не вдалося створити іконку. " + error);
+                alert("Не вдалося створити іконку. Перевірте посилання або файл.");
             });
         });
         
@@ -1515,313 +1547,7 @@
                 grid.appendChild(img);
             });
         }
-        
-        // --- DRAWING AND MEASUREMENT LOGIC ---
-        
-        function stopCurrentMapAction() {
-            if (currentDrawHandler) {
-                currentDrawHandler.disable();
-                currentDrawHandler = null;
-            }
-            document.querySelectorAll('.draw-tool-button.active').forEach(b => b.classList.remove('active'));
-            L.DomUtil.removeClass(map._container, 'map-placement-mode');
-        }
 
-        function startMeasurement() {
-            stopCurrentMapAction();
-            document.getElementById('map').classList.add('map-placement-mode');
-            let tempLayer = L.layerGroup().addTo(map);
-            let firstPoint = null;
-            const measurementDisplay = document.getElementById('measurement-display');
-
-            const clickHandler = (e) => {
-                if (!firstPoint) {
-                    firstPoint = e.latlng;
-                    L.circleMarker(firstPoint, { radius: 4, color: document.getElementById('drawing-color-picker').value }).addTo(tempLayer);
-                } else {
-                    const secondPoint = e.latlng;
-                    
-                    const routingControl = L.Routing.control({
-                        waypoints: [firstPoint, secondPoint],
-                        routeWhileDragging: false, show: false, addWaypoints: false, draggableWaypoints: false, fitSelectedRoutes: false,
-                        lineOptions: { styles: [{ color: document.getElementById('drawing-color-picker').value, opacity: 0.8, weight: 5 }] },
-                        createMarker: function() { return null; }
-                    }).addTo(map);
-
-                    routingControl.on('routesfound', function(e) {
-                        const route = e.routes[0];
-                        const routeLine = L.polyline(route.coordinates, {
-                            color: document.getElementById('drawing-color-picker').value, opacity: 0.8, weight: 5
-                        }).addTo(measurementLayer);
-                        
-                        const distance = route.summary.totalDistance;
-                        const formattedDist = distance > 1000 ? `${(distance / 1000).toFixed(2)} km` : `${Math.round(distance)} m`;
-                        
-                        const label = L.marker(routeLine.getCenter(), {
-                            icon: L.divIcon({ className: 'distance-label', html: formattedDist })
-                        }).addTo(measurementLayer);
-
-                        drawnItemsHistory.push(routeLine, label);
-                        map.removeControl(routingControl);
-                    });
-                    
-                    routingControl.on('routingerror', function(e) {
-                        console.warn("Routing error, falling back to straight line:", e.error);
-                        const line = L.polyline([firstPoint, secondPoint], {
-                            color: document.getElementById('drawing-color-picker').value, opacity: 0.8, weight: 5, dashArray: '5, 5'
-                        }).addTo(measurementLayer);
-                        
-                        const distance = firstPoint.distanceTo(secondPoint);
-                        const formattedDist = distance > 1000 ? `${(distance / 1000).toFixed(2)} km` : `${Math.round(distance)} m`;
-                        
-                        const label = L.marker(line.getCenter(), {
-                           icon: L.divIcon({ className: 'distance-label', html: `~ ${formattedDist}` })
-                        }).addTo(measurementLayer);
-
-                        drawnItemsHistory.push(line, label);
-                        map.removeControl(routingControl);
-                   });
-
-                    map.off('click', clickHandler);
-                    map.off('mousemove', moveHandler);
-                    tempLayer.clearLayers();
-                    L.DomUtil.removeClass(map._container, 'map-placement-mode');
-                    measurementDisplay.style.display = 'none';
-                }
-            };
-            
-            const moveHandler = (e) => {
-                if (firstPoint) {
-                    const distance = firstPoint.distanceTo(e.latlng);
-                    const formattedDist = distance > 1000 ? `${(distance / 1000).toFixed(2)} km` : `${Math.round(distance)} m`;
-                    measurementDisplay.innerHTML = `Дистанція: ${formattedDist}`;
-                    measurementDisplay.style.display = 'block';
-                }
-            };
-            
-            map.on('click', clickHandler);
-            map.on('mousemove', moveHandler);
-            
-            currentDrawHandler = {
-                disable: () => {
-                    map.off('click', clickHandler);
-                    map.off('mousemove', moveHandler);
-                    tempLayer.clearLayers();
-                    L.DomUtil.removeClass(map._container, 'map-placement-mode');
-                    measurementDisplay.style.display = 'none';
-                }
-            };
-        }
-        
-        document.getElementById('close-draw-toolbar').addEventListener('click', () => {
-            stopCurrentMapAction();
-            drawingToolbar.style.display = 'none';
-        });
-
-        document.getElementById('undo-draw-button').addEventListener('click', () => {
-            const lastItem = drawnItemsHistory.pop();
-            if (lastItem) {
-                drawingsLayer.removeLayer(lastItem);
-                measurementLayer.removeLayer(lastItem);
-            }
-        });
-        
-        drawingToolbar.addEventListener('click', (e) => {
-            const button = e.target.closest('.draw-tool-button');
-            if (!button || button.id === 'undo-draw-button' || button.id === 'close-draw-toolbar') return;
-            
-            stopCurrentMapAction();
-            button.classList.add('active');
-            
-            const drawType = button.dataset.drawType;
-            let startPoint = null;
-            let tempShape = null;
-            const options = { color: document.getElementById('drawing-color-picker').value, weight: 3 };
-            if (drawType === 'dashed') options.dashArray = '5, 10';
-
-            const onMouseDown = (e_down) => {
-                startPoint = e_down.latlng;
-                map.on('mousemove', onMouseMove);
-                map.on('mouseup', onMouseUp);
-            };
-
-            const onMouseMove = (e_move) => {
-                if (!startPoint) return;
-                const currentPoint = e_move.latlng;
-                if (tempShape) map.removeLayer(tempShape);
-
-                if (drawType === 'rectangle') {
-                    tempShape = L.rectangle(L.latLngBounds(startPoint, currentPoint), options).addTo(map);
-                } else if (drawType === 'circle') {
-                    const radius = startPoint.distanceTo(currentPoint);
-                    tempShape = L.circle(startPoint, { ...options, radius: radius }).addTo(map);
-                }
-            };
-
-            const onMouseUp = (e_up) => {
-                map.off('mousemove', onMouseMove);
-                map.off('mouseup', onMouseUp);
-                if (tempShape) {
-                    drawingsLayer.addLayer(tempShape);
-                    drawnItemsHistory.push(tempShape);
-                    tempShape = null;
-                }
-                stopCurrentMapAction();
-            };
-
-            const onTwoClicks = (e) => {
-                if (!startPoint) {
-                    startPoint = e.latlng;
-                } else {
-                    const finalLayer = L.polyline([startPoint, e.latlng], options).addTo(drawingsLayer);
-                    drawnItemsHistory.push(finalLayer);
-                    if (drawType === 'arrow') {
-                        const decorator = L.polylineDecorator(finalLayer, {
-                            patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: options.color } }) }]
-                        }).addTo(drawingsLayer);
-                         drawnItemsHistory.push(decorator);
-                    }
-                    map.off('click', onTwoClicks);
-                    stopCurrentMapAction();
-                }
-            };
-            
-            document.getElementById('map').classList.add('map-placement-mode');
-            
-            if (drawType === 'rectangle' || drawType === 'circle') {
-                 map.once('mousedown', onMouseDown);
-            } else {
-                 map.on('click', onTwoClicks);
-            }
-
-            currentDrawHandler = {
-                disable: () => {
-                    map.off('mousedown', onMouseDown);
-                    map.off('mousemove', onMouseMove);
-                    map.off('mouseup', onMouseUp);
-                    map.off('click', onTwoClicks);
-                    if(tempShape) map.removeLayer(tempShape);
-                }
-            }
-        });
-
-        // --- NEW: Mortar Logic ---
-        document.getElementById('close-mortar-toolbar').addEventListener('click', () => {
-            stopCurrentMapAction();
-            mortarToolbar.style.display = 'none';
-        });
-
-        mortarToolbar.addEventListener('click', (e) => {
-            const button = e.target.closest('.draw-tool-button');
-            if (!button || button.id === 'close-mortar-toolbar') return;
-
-            stopCurrentMapAction();
-            button.classList.add('active');
-
-            const mortarType = button.dataset.mortarType;
-            const ranges = MORTAR_RANGES[mortarType];
-            if (!ranges) return;
-
-            startMortarPlacement(ranges.min, ranges.max, mortarType);
-        });
-
-        function startMortarPlacement(minRange, maxRange, type) {
-            document.getElementById('map').classList.add('map-placement-mode');
-
-            const placeMortar = (pos) => {
-                const rangeGroup = L.layerGroup();
-
-                const minCircle = L.circle(pos, { radius: minRange, color: '#f5a623', weight: 2, dashArray: '5, 5', fillOpacity: 0.1 }).addTo(rangeGroup);
-                const maxCircle = L.circle(pos, { radius: maxRange, color: '#d0021b', weight: 2, fillOpacity: 0.1 }).addTo(rangeGroup);
-                const center = L.marker(pos, { icon: L.divIcon({ className: 'fa-solid fa-bullseye', html: `<i class="fa-solid fa-bullseye" style="color: #d0021b;"></i>`})}).addTo(rangeGroup);
-                
-                center.bindPopup(`<b>Міномет ${type}</b><br>Дальність: ${minRange}м - ${maxRange}м`).openPopup();
-                
-                drawingsLayer.addLayer(rangeGroup);
-                drawnItemsHistory.push(rangeGroup);
-                stopCurrentMapAction();
-            };
-
-            map.once('click', placeMortar);
-
-            currentDrawHandler = {
-                disable: () => {
-                    map.off('click', placeMortar);
-                }
-            };
-        }
-        
-        // --- NEW: Military Icon Data (APP-6 Standard) ---
-        const MILITARY_ICONS = {
-            'Friendly': {
-                'Infantry': '<g transform="translate(100 100) scale(0.8 0.8)"><line x1="-80" y1="80" x2="80" y2="-80" stroke="currentColor" stroke-width="12" /><line x1="80" y1="80" x2="-80" y2="-80" stroke="currentColor" stroke-width="12" /></g>',
-                'Armor': '<g transform="translate(100 100) scale(0.8 0.8)"><ellipse cx="0" cy="0" rx="90" ry="60" stroke="currentColor" stroke-width="12" fill="none"/></g>',
-                'Artillery': '<g transform="translate(100 100) scale(0.8 0.8)"><circle cx="0" cy="0" r="20" fill="currentColor"/></g>',
-                'Observation Post': '<g transform="translate(100 100) scale(0.8 0.8)"><line x1="0" y1="-80" x2="0" y2="80" stroke="currentColor" stroke-width="12" /><line x1="-80" y1="0" x2="-20" y2="0" stroke="currentColor" stroke-width="12" /><line x1="-80" y1="0" x2="-50" y2="-30" stroke="currentColor" stroke-width="12" /></g>'
-            },
-            'Hostile': {
-                'Infantry': '<g transform="translate(100 100) scale(0.8 0.8)"><line x1="-80" y1="80" x2="80" y2="-80" stroke="currentColor" stroke-width="12" /><line x1="80" y1="80" x2="-80" y2="-80" stroke="currentColor" stroke-width="12" /></g>',
-                'Armor': '<g transform="translate(100 100) scale(0.8 0.8)"><ellipse cx="0" cy="0" rx="90" ry="60" stroke="currentColor" stroke-width="12" fill="none"/></g>',
-                'Artillery': '<g transform="translate(100 100) scale(0.8 0.8)"><circle cx="0" cy="0" r="20" fill="currentColor"/></g>',
-                 'Mortar': '<g transform="translate(100 100) scale(0.8 0.8)"><circle cx="0" cy="0" r="20" fill="currentColor"/><line x1="0" y1="20" x2="0" y2="70" stroke="currentColor" stroke-width="12"/><path d="M 0 70 L 20 90" stroke="currentColor" stroke-width="12" fill="none"/></g>'
-            },
-            'Neutral': {
-                'Infantry': '<g transform="translate(100 100) scale(0.8 0.8)"><line x1="-80" y1="80" x2="80" y2="-80" stroke="currentColor" stroke-width="12" /><line x1="80" y1="80" x2="-80" y2="-80" stroke="currentColor" stroke-width="12" /></g>',
-            },
-            'Unknown': {
-                'Unit': '<g transform="translate(100 100) scale(0.8 0.8)"></g>',
-            }
-        };
-
-        function getMilitaryFrame(category) {
-            switch (category) {
-                case 'Friendly': return '<rect x="5" y="5" width="190" height="123.3" rx="10" ry="10" stroke="currentColor" stroke-width="10" fill="none" />';
-                case 'Hostile': return '<path d="M 5,66.65 L 100,5 L 195,66.65 L 100,128.3 Z" stroke="currentColor" stroke-width="10" fill="none" />';
-                case 'Neutral': return '<rect x="5" y="5" width="190" height="123.3" stroke="currentColor" stroke-width="10" fill="none" />';
-                case 'Unknown': return '<path d="M 5,66.65 C 5,5 195,5 195,66.65 S 5,128.3 5,66.65 Z" stroke="currentColor" stroke-width="10" fill="none"/>';
-                default: return '';
-            }
-        }
-
-        function populateMilitaryIconCategories() {
-            const container = document.getElementById('military-icon-categories');
-            container.innerHTML = '';
-            Object.keys(MILITARY_ICONS).forEach(category => {
-                const button = document.createElement('button');
-                button.className = 'category-button';
-                button.textContent = category === 'Friendly' ? 'Дружні' : category === 'Hostile' ? 'Ворожі' : category === 'Neutral' ? 'Нейтральні' : 'Невідомі';
-                button.dataset.category = category;
-                if (category === 'Friendly') button.classList.add('active');
-                container.appendChild(button);
-            });
-            container.addEventListener('click', (e) => {
-                if (e.target.matches('.category-button')) {
-                    document.querySelectorAll('.category-button.active').forEach(b => b.classList.remove('active'));
-                    e.target.classList.add('active');
-                    populateMilitaryIcons(e.target.dataset.category);
-                }
-            });
-        }
-        
-        function populateMilitaryIcons(category) {
-            const grid = document.getElementById('military-icon-grid');
-            grid.innerHTML = '';
-            const frame = getMilitaryFrame(category);
-            const icons = MILITARY_ICONS[category];
-            for (const name in icons) {
-                const svgContent = `<svg viewBox="0 0 200 133.3">${frame}${icons[name]}</svg>`;
-                const img = document.createElement('img');
-                img.src = 'data:image/svg+xml;base64,' + btoa(svgContent.replace(/currentColor/g, 'black'));
-                img.className = 'military-icon-item';
-                img.title = name;
-                img.dataset.svg = svgContent;
-                img.onclick = () => {
-                    document.querySelectorAll('.military-icon-item.selected').forEach(el => el.classList.remove('selected'));
-                    img.classList.add('selected');
-                };
-                grid.appendChild(img);
-            }
-        }
 
         // --- APPLICATION STARTUP ---
         window.addEventListener('load', () => {
