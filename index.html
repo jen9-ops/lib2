@@ -64,7 +64,7 @@
             height: 100%;
         }
 
-        .map-drawing-mode { cursor: crosshair !important; }
+        .map-drawing-mode, .map-measuring-mode { cursor: crosshair !important; }
         .map-erasing-mode { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgba(255, 59, 48, 0.9)" stroke="white" stroke-width="1.5" d="M20.71,6.29l-3-3a1,1,0,0,0-1.42,0L4.41,15.17a1,1,0,0,0,0,1.42L8.83,21a1,1,0,0,0,1.42,0L20.71,7.71A1,1,0,0,0,20.71,6.29ZM9.54,19.59l-4.42-4.42L12,8.3,16.3,12.59ZM17,11.17,12.83,7,15,4.83,19.17,9Z"/></svg>'), auto !important; }
 
 
@@ -510,7 +510,7 @@
         body.dark-theme .leaflet-control-layers { color: var(--text-color); }
         body.dark-theme .leaflet-control-layers-toggle { background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f5f5f7"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important; }
         
-        .leaflet-tooltip.drawing-tooltip {
+        .leaflet-tooltip.drawing-tooltip, .leaflet-tooltip.measure-tooltip {
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
             color: var(--text-color);
@@ -567,11 +567,13 @@
         <button id="deepstate-button" class="action-button" title="Наложение на DeepState Map"><i class="fa-solid fa-layer-group"></i></button>
         <button id="add-point-button" class="action-button" title="Додати власну точку"><i class="fa-solid fa-map-pin"></i></button>
         <button id="draw-button" class="action-button" title="Інструменти малювання"><i class="fa-solid fa-pencil-ruler"></i></button>
+        <button id="measure-button" class="action-button" title="Лінійка"><i class="fa-solid fa-ruler-horizontal"></i></button>
         <button id="gps-button" class="action-button" title="Знайти моє місцеположення"><i class="fa-solid fa-location-crosshairs"></i></button>
         <button id="route-recorder-button" class="action-button" title="Запис маршруту"><i class="fa-solid fa-route"></i></button>
         <button id="routing-button" class="action-button" title="Прокласти маршрут (2 кліки)"><i class="fa-solid fa-diamond-turn-right"></i></button>
         <button id="upload-button" class="action-button" title="Завантажити логи"><i class="fa-solid fa-upload"></i></button>
         <button id="export-button" class="action-button" title="Експорт (GeoJSON)"><i class="fa-solid fa-file-export"></i></button>
+        <button id="share-button" class="action-button" title="Поделиться"><i class="fa-solid fa-share-nodes"></i></button>
         <button id="install-button" class="action-button" title="Встановити додаток"><i class="fa-solid fa-download"></i></button>
     </div>
 
@@ -751,9 +753,10 @@
         let routingControl = null;
         let mortarRangeLayer = L.layerGroup();
         
-        // Drawing variables
+        // Drawing and Measurement variables
         let activeDrawCleanup = null;
-
+        let activeMeasureCleanup = null;
+        
         // --- Map and layers initialization ---
         const map = L.map('map', { zoomControl: false }).setView([50.41, 30.64], 11);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -796,11 +799,13 @@
             { id: 'deepstate-button', title: 'DeepState', icon: 'fa-solid fa-layer-group' },
             { id: 'add-point-button', title: 'Додати точку', icon: 'fa-solid fa-map-pin' },
             { id: 'draw-button', title: 'Малювання', icon: 'fa-solid fa-pencil-ruler' },
+            { id: 'measure-button', title: 'Лінійка', icon: 'fa-solid fa-ruler-horizontal' },
             { id: 'gps-button', title: 'Моє місце', icon: 'fa-solid fa-location-crosshairs' },
             { id: 'route-recorder-button', title: 'Запис маршруту', icon: 'fa-solid fa-route' },
             { id: 'routing-button', title: 'Авто-маршрут', icon: 'fa-solid fa-diamond-turn-right' },
             { id: 'upload-button', title: 'Завантажити лог', icon: 'fa-solid fa-upload' },
             { id: 'export-button', title: 'Експорт', icon: 'fa-solid fa-file-export' },
+            { id: 'share-button', title: 'Поділитися', icon: 'fa-solid fa-share-nodes' },
             { id: 'install-button', title: 'Встановити', icon: 'fa-solid fa-download' }
         ];
         
@@ -1260,6 +1265,7 @@
                 } else {
                     line.setStyle({ dashArray: '5, 10' });
                 }
+                saveDrawings();
             };
             
             map.on('mousemove', onMouseMove);
@@ -1279,6 +1285,7 @@
         function handleEscKey(e) {
             if (e.key === "Escape") {
                 stopDrawingMode();
+                stopMeasurementTool();
             }
         }
 
@@ -1305,7 +1312,10 @@
                     const point2 = map.containerPointToLatLng(L.point(e.containerPoint.x + 15, e.containerPoint.y));
                     const tolerance = map.distance(point1, point2) / 1000;
 
-                    if (layerToDelete && minDistance < tolerance) { drawingsLayer.removeLayer(layerToDelete); }
+                    if (layerToDelete && minDistance < tolerance) { 
+                        drawingsLayer.removeLayer(layerToDelete); 
+                        saveDrawings();
+                    }
                 };
                 map.on('click', onEraseClick);
                 activeDrawCleanup = () => map.off('click', onEraseClick);
@@ -1327,6 +1337,7 @@
                     isDrawing = false;
                     map.dragging.enable();
                     if(tooltip) map.removeLayer(tooltip);
+                    saveDrawings();
                     stopDrawingMode();
                 };
 
@@ -1371,6 +1382,7 @@
                             case 'repeating-arrow': L.polylineDecorator(line, { patterns: [{ offset: 15, repeat: 35, symbol: L.Symbol.arrowHead({ pixelSize: 10, pathOptions: { stroke: true, color: color } }) }] }).addTo(featureGroup); break;
                             case 'dashed-line': line.setStyle({ dashArray: '5, 10' }); break;
                         }
+                        saveDrawings();
                         stopDrawingMode();
                     }
                 };
@@ -1674,6 +1686,66 @@
                 alert("Не вдалося розрахувати зону ураження.");
             }
         }
+        
+        // --- MEASUREMENT TOOL ---
+        function stopMeasurementTool() {
+            if (activeMeasureCleanup) {
+                activeMeasureCleanup();
+                activeMeasureCleanup = null;
+            }
+            const measureButton = document.querySelector('#action-buttons #measure-button');
+            if(measureButton) measureButton.classList.remove('active');
+            map.getContainer().classList.remove('map-measuring-mode');
+            document.removeEventListener('keydown', handleEscKey);
+        }
+
+        function startMeasurementTool() {
+            if (activeMeasureCleanup) {
+                stopMeasurementTool();
+                return;
+            }
+            stopDrawingMode(); // Stop any other active tool
+            document.addEventListener('keydown', handleEscKey);
+
+            const measureButton = document.querySelector('#action-buttons #measure-button');
+            measureButton.classList.add('active');
+            map.getContainer().classList.add('map-measuring-mode');
+            
+            let points = [];
+            let tempLayer = L.layerGroup().addTo(map);
+            let tooltip = L.tooltip({ permanent: true, direction: 'right', className: 'measure-tooltip' });
+
+            const onMouseMove = (e) => {
+                if (points.length > 0) {
+                    tooltip.setLatLng(e.latlng).addTo(map);
+                    const tempLine = L.polyline([...points, e.latlng]);
+                    const totalDistance = turf.length(tempLine.toGeoJSON(), { units: 'meters' });
+                    tooltip.setContent(`Загальна довжина: ${formatDistance(totalDistance)}`);
+                }
+            };
+            
+            const onMapClick = (e) => {
+                points.push(e.latlng);
+                L.circle(e.latlng, { radius: 3, color: 'var(--accent-color)', fillOpacity: 1 }).addTo(tempLayer);
+                
+                if (points.length > 1) {
+                    tempLayer.clearLayers(); // Redraw everything to keep it clean
+                    points.forEach(p => L.circle(p, { radius: 4, color: 'var(--accent-color)', fillOpacity: 1 }).addTo(tempLayer));
+                    L.polyline(points, { color: 'var(--accent-color)', weight: 2, dashArray: '5, 5' }).addTo(tempLayer);
+                }
+            };
+            
+            map.on('mousemove', onMouseMove);
+            map.on('click', onMapClick);
+
+            activeMeasureCleanup = () => {
+                map.off('click', onMapClick);
+                map.off('mousemove', onMouseMove);
+                map.removeLayer(tempLayer);
+                map.removeLayer(tooltip);
+            };
+        }
+
 
         function exportGeoJson() {
             const allFeatures = [
@@ -1691,6 +1763,96 @@
             dl.click();
             dl.remove();
         }
+        
+        // --- SHARE FUNCTIONALITY ---
+        async function shareUserData() {
+            // 1. Собираем маршруты
+            const routesFeatures = savedRoutes.map(route => {
+                const coords = route.latlngs.map(ll => [('lng' in ll) ? ll.lng : ll[1], ('lat' in ll) ? ll.lat : ll[0]]);
+                return turf.lineString(coords, {
+                    name: route.name,
+                    color: route.color,
+                    distance: route.distance,
+                    dataType: 'route' // Пользовательское свойство для идентификации
+                });
+            });
+
+            // 2. Собираем пользовательские точки
+            const pointsGeoJSON = customPointsLayer.toGeoJSON();
+            pointsGeoJSON.features.forEach(feature => {
+                feature.properties.dataType = 'point';
+            });
+
+            // 3. Собираем рисунки (ИСПРАВЛЕННАЯ ЛОГИКА)
+            const drawingsFeatures = [];
+            drawingsLayer.eachLayer(group => {
+                let mainLayer, decorator;
+                group.eachLayer(l => {
+                    if (l instanceof L.PolylineDecorator) {
+                        decorator = l;
+                    } else if (l instanceof L.Polyline || l instanceof L.Marker) {
+                         mainLayer = l;
+                    }
+                });
+
+                if (mainLayer) {
+                    const feature = mainLayer.toGeoJSON();
+                    feature.properties.options = mainLayer.options;
+                    feature.properties.dataType = 'drawing';
+                    if (decorator) {
+                        feature.properties.decorator = decorator.options.patterns;
+                    }
+                    drawingsFeatures.push(feature);
+                }
+            });
+
+
+            const allUserFeatures = [
+                ...routesFeatures,
+                ...pointsGeoJSON.features,
+                ...drawingsFeatures
+            ];
+
+            if (allUserFeatures.length === 0) {
+                alert("Немає даних для поширення. Додайте точки, маршрути або малюнки.");
+                return;
+            }
+
+            const featureCollection = turf.featureCollection(allUserFeatures);
+            const jsonString = JSON.stringify(featureCollection, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const file = new File([blob], `map_data_${new Date().toISOString().slice(0,10)}.json`, { type: 'application/json' });
+            
+            // Web Share API для мобильных устройств
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Мої дані з карти',
+                        text: 'Файл з маршрутами, точками та малюнками.',
+                        files: [file],
+                    });
+                } catch (error) {
+                    // Ошибку выводим в консоль, чтобы не мешать пользователю, если он нажал "отмена"
+                    console.error('Помилка поширення:', error);
+                }
+            } else {
+                // Запасной вариант для ПК - скачивание файла
+                try {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error('Помилка скачування файлу:', error);
+                    alert('Не вдалося скачати файл.');
+                }
+            }
+        }
+
 
         // --- TOOLBAR MANAGEMENT ---
         function saveButtonConfig() {
@@ -1757,11 +1919,13 @@
                     customPointModal.classList.add('visible');
                 }); break;
                 case 'draw-button': button.addEventListener('click', () => drawingModalOverlay.classList.add('visible')); break;
+                case 'measure-button': button.addEventListener('click', startMeasurementTool); break;
                 case 'gps-button': button.addEventListener('click', getGpsLocation); break;
                 case 'route-recorder-button': button.addEventListener('click', toggleRouteRecording); break;
                 case 'routing-button': button.addEventListener('click', startAutomaticRouting); break;
                 case 'upload-button': button.addEventListener('click', () => logFileInput.click()); break;
                 case 'export-button': button.addEventListener('click', exportGeoJson); break;
+                case 'share-button': button.addEventListener('click', shareUserData); break;
                 case 'install-button': button.addEventListener('click', async () => {
                     if (deferredPrompt) {
                         deferredPrompt.prompt();
@@ -1906,18 +2070,103 @@
         
         function startMarkerPlacement(name, icon, latlng = null) {
             const placeMarker = (pos) => {
-                L.marker(pos, { icon: icon, draggable: true }).addTo(customPointsLayer)
+                const marker = L.marker(pos, { icon: icon, draggable: true }).addTo(customPointsLayer)
                     .bindPopup(`<b>${name}</b><br>Коорд: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`).openPopup();
-                 map.getContainer().classList.remove('map-drawing-mode');
+                 
+                // Save icon and popup info to the layer's GeoJSON properties
+                marker.feature = marker.feature || {};
+                marker.feature.type = "Feature";
+                marker.feature.properties = marker.feature.properties || {};
+                marker.feature.properties.popupContent = marker.getPopup().getContent();
+                marker.feature.properties.icon = {
+                    type: icon instanceof L.DivIcon ? 'div' : 'icon',
+                    options: icon.options
+                };
+                 
+                marker.on('dragend', saveCustomPoints);
+                saveCustomPoints();
+                map.getContainer().classList.remove('map-drawing-mode');
             };
 
             customPointModal.classList.remove('visible');
             if (latlng) {
                 placeMarker(latlng);
             } else {
-                 map.getContainer().classList.add('map-drawing-mode');
+                map.getContainer().classList.add('map-drawing-mode');
                 map.once('click', (e) => placeMarker(e.latlng));
             }
+        }
+        
+        // --- LOCALSTORAGE PERSISTENCE ---
+        function saveCustomPoints() {
+            const data = customPointsLayer.toGeoJSON();
+            localStorage.setItem('customPoints', JSON.stringify(data));
+        }
+
+        function loadCustomPoints() {
+            const dataStr = localStorage.getItem('customPoints');
+            if (!dataStr) return;
+            
+            const data = JSON.parse(dataStr);
+            L.geoJSON(data, {
+                pointToLayer: (feature, latlng) => {
+                    let icon;
+                    const iconInfo = feature.properties.icon;
+                    if (iconInfo && iconInfo.type === 'div') {
+                        icon = L.divIcon(iconInfo.options);
+                    } else if (iconInfo && iconInfo.type === 'icon') {
+                        icon = L.icon(iconInfo.options);
+                    }
+                    const marker = L.marker(latlng, { icon: icon, draggable: true });
+                    
+                    marker.on('dragend', saveCustomPoints);
+                    return marker;
+                },
+                onEachFeature: (feature, layer) => {
+                    if (feature.properties && feature.properties.popupContent) {
+                        layer.bindPopup(feature.properties.popupContent);
+                    }
+                    // Re-assign feature properties for saving later
+                    layer.feature = layer.feature || {};
+                    layer.feature.properties = feature.properties;
+                }
+            }).addTo(customPointsLayer);
+        }
+
+        function saveDrawings() {
+            // Leaflet.PolylineDecorator doesn't serialize to GeoJSON, so we store metadata
+            const data = { type: "FeatureCollection", features: [] };
+            drawingsLayer.eachLayer(group => {
+                let mainLayer, decorator;
+                group.eachLayer(l => {
+                    if (l instanceof L.PolylineDecorator) decorator = l; else mainLayer = l;
+                });
+                if(mainLayer){
+                    const feature = mainLayer.toGeoJSON();
+                    feature.properties.options = mainLayer.options;
+                    if (decorator) {
+                        feature.properties.decorator = decorator.options.patterns;
+                    }
+                    data.features.push(feature);
+                }
+            });
+            localStorage.setItem('drawings', JSON.stringify(data));
+        }
+
+        function loadDrawings() {
+            const dataStr = localStorage.getItem('drawings');
+            if (!dataStr) return;
+
+            const data = JSON.parse(dataStr);
+            L.geoJSON(data, {
+                onEachFeature: (feature, layer) => {
+                    const featureGroup = L.featureGroup().addTo(drawingsLayer);
+                    const line = L.polyline(layer.getLatLngs(), feature.properties.options).addTo(featureGroup);
+                    if (feature.properties.decorator) {
+                        L.polylineDecorator(line, { patterns: feature.properties.decorator }).addTo(featureGroup);
+                    }
+                }
+            });
         }
         
         // --- ICON COLLECTION LOGIC ---
@@ -1957,6 +2206,8 @@
         window.addEventListener('load', () => {
             loadCustomIcons();
             loadSavedRoutes();
+            loadCustomPoints();
+            loadDrawings();
             loadButtonConfig();
             renderVisibleButtons();
             
@@ -1974,6 +2225,4 @@
         }
     </script>
 </body>
-</html>
-
-
+    </html>
