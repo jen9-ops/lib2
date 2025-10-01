@@ -89,7 +89,7 @@
         #panel-toggle-button, #toolbar-settings-button {
             width: 45px;
             height: 45px;
-            cursor: pointer;
+            cursor: grab;
             font-size: 20px;
             color: var(--text-color);
             background: transparent;
@@ -100,13 +100,18 @@
         #toolbar-settings-button {
             position: absolute;
             top: 10px;
-            left: 15px;
+            right: 10px;
             z-index: 1001;
         }
 
         #panel-toggle-button:hover, #toolbar-settings-button:hover {
             transform: scale(1.1);
             color: var(--accent-color);
+        }
+        
+        #panel-toggle-button.grabbing, #toolbar-settings-button.grabbing {
+            cursor: grabbing;
+            z-index: 1002;
         }
 
         #action-buttons {
@@ -558,7 +563,7 @@
         .leaflet-routing-alt, .leaflet-routing-geocoder { background-color: rgba(128,128,128,0.1) !important; }
         .leaflet-routing-geocoder input { color: var(--text-color) !important; }
         /* Hide instruction list by default for programmatic routing */
-        .leaflet-routing-container .leaflet-routing-alternatives-container { display: none; }
+        .leaflet-routing-container .leaflet-routing-instructions { display: none; }
 
 
         /* --- RESPONSIVENESS --- */
@@ -596,8 +601,8 @@
         <button id="route-recorder-button" class="action-button" title="Запис маршруту"><i class="fa-solid fa-route"></i></button>
         <button id="routing-button" class="action-button" title="Прокласти маршрут (2 кліки)"><i class="fa-solid fa-diamond-turn-right"></i></button>
         <button id="goto-coords-button" class="action-button" title="Перейти до координат"><i class="fa-solid fa-magnifying-glass-location"></i></button>
-        <button id="upload-button" class="action-button" title="Завантажити логи"><i class="fa-solid fa-upload"></i></button>
-        <button id="export-button" class="action-button" title="Експорт (GeoJSON)"><i class="fa-solid fa-file-export"></i></button>
+        <button id="upload-button" class="action-button" title="Завантажити проєкт / лог"><i class="fa-solid fa-upload"></i></button>
+        <button id="export-button" class="action-button" title="Зберегти проєкт"><i class="fa-solid fa-file-export"></i></button>
         <button id="install-button" class="action-button" title="Встановити додаток"><i class="fa-solid fa-download"></i></button>
     </div>
 
@@ -624,7 +629,7 @@
         </div>
     </div>
     
-    <input type="file" id="log-file-input" multiple accept=".json" style="display: none;">
+    <input type="file" id="file-input" multiple accept=".json" style="display: none;">
     <div id="loader-overlay" class="hidden" style="display:none;"><div class="loader"></div></div>
     <div id="coords-display">Lat: 0.00000, Lng: 0.00000<br>MGRS: N/A</div>
 
@@ -667,10 +672,16 @@
             </div>
             <div id="drawing-options">
                 <button class="draw-option-button" data-draw-type="pencil"><i class="fa-solid fa-pencil"></i><span>Карандаш</span></button>
+                <button class="draw-option-button" data-draw-type="ruler"><i class="fa-solid fa-ruler-horizontal"></i><span>Лінійка</span></button>
                 <button class="draw-option-button" data-draw-type="arrow"><i class="fa-solid fa-arrow-right"></i><span>Стрілка</span></button>
                 <button class="draw-option-button" data-draw-type="repeating-arrow"><i class="fa-solid fa-angles-right"></i><span>Повтор. стрілки</span></button>
                 <button class="draw-option-button" data-draw-type="dashed-line"><i class="fa-solid fa-grip-lines"></i><span>Пунктир</span></button>
                 <button class="draw-option-button" data-draw-type="eraser"><i class="fa-solid fa-eraser"></i><span>Ластик</span></button>
+            </div>
+            <div class="form-group" style="text-align: center; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+              <label>
+                <input type="checkbox" id="drawing-add-zone"> Додати зону ураження до малюнку
+              </label>
             </div>
         </div>
     </div>
@@ -842,7 +853,7 @@
 
         // --- DOM Element References ---
         const loader = document.getElementById('loader-overlay');
-        const logFileInput = document.getElementById('log-file-input');
+        const fileInput = document.getElementById('file-input');
         const iframeOverlay = document.getElementById('iframe-overlay');
         const iframeCloseButton = document.getElementById('iframe-close-button');
         const panelToggleButton = document.getElementById('panel-toggle-button');
@@ -871,8 +882,8 @@
             { id: 'route-recorder-button', title: 'Запис маршруту', icon: 'fa-solid fa-route' },
             { id: 'routing-button', title: 'Авто-маршрут', icon: 'fa-solid fa-diamond-turn-right' },
             { id: 'goto-coords-button', title: 'Перейти до координат', icon: 'fa-solid fa-magnifying-glass-location' },
-            { id: 'upload-button', title: 'Завантажити лог', icon: 'fa-solid fa-upload' },
-            { id: 'export-button', title: 'Експорт', icon: 'fa-solid fa-file-export' },
+            { id: 'upload-button', title: 'Завантажити проєкт / лог', icon: 'fa-solid fa-upload' },
+            { id: 'export-button', title: 'Зберегти проєкт', icon: 'fa-solid fa-file-export' },
             { id: 'install-button', title: 'Встановити', icon: 'fa-solid fa-download' }
         ];
         
@@ -977,6 +988,7 @@
                 if (e.button === 2) return;
                 isDragging = true;
                 wasDragged = false;
+                element.style.position = 'absolute'; // Ensure position for movement
                 element.classList.add('grabbing');
                 const touch = e.type === 'touchstart', event = touch ? e.touches[0] : e;
                 startX = event.clientX;
@@ -1094,11 +1106,45 @@
             }
         }
         
-        function handleFileSelect(event) {
+        function handleFileUpload(event) {
             loader.style.display = 'flex';
-            allLogsData = [];
-            let logIdCounter = 0;
             const files = Array.from(event.target.files);
+            if (files.length === 0) {
+                loader.style.display = 'none';
+                return;
+            }
+
+            // Simple check: if multiple files, treat as logs. If one, check content.
+            if (files.length > 1) {
+                handleLogFiles(files);
+                return;
+            }
+
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    // Check for project file structure
+                    if (data.customPoints && data.drawings && data.savedRoutes) {
+                        loadProject(data);
+                    } else {
+                        // Assume it's a single log file
+                        handleLogFiles([file]);
+                    }
+                } catch (err) {
+                    showAlert('Не вдалося прочитати файл. Переконайтеся, що це валідний JSON файл проєкту або логу.');
+                    console.error("File Read Error:", err);
+                    loader.style.display = 'none';
+                }
+            };
+            reader.readAsText(file);
+            fileInput.value = ''; // Reset input
+        }
+
+        function handleLogFiles(files) {
+            allLogsData = []; // Clear existing log data
+            let logIdCounter = 0;
             const promises = files.map((file, index) => new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
@@ -1123,6 +1169,7 @@
                 loader.style.display = 'none';
             });
         }
+
 
         // --- MAP & UI UPDATE LOGIC ---
         function updateMap() {
@@ -1354,7 +1401,9 @@
 
                 const endPoint = e.latlng;
                 const featureGroup = L.featureGroup().addTo(drawingsLayer);
-                const line = L.polyline([startPoint, endPoint], { color: currentModalLog.log.fileColor || '#ff0000', weight: 3 }).addTo(featureGroup);
+                const line = L.polyline([startPoint, endPoint], { color: currentModalLog.log.fileColor || '#ff0000', weight: 3 });
+                line.feature = { properties: { drawType: type, color: line.options.color } };
+                line.addTo(featureGroup);
                 
                 if (type === 'arrow') {
                     L.polylineDecorator(line, { patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: line.options.color } }) }] }).addTo(featureGroup);
@@ -1386,6 +1435,7 @@
         function startDrawingMode(type, color) {
             stopDrawingMode(); 
             document.addEventListener('keydown', handleEscKey);
+            const addZone = document.getElementById('drawing-add-zone').checked;
 
             if (type === 'eraser') {
                 map.getContainer().classList.add('map-erasing-mode');
@@ -1428,6 +1478,17 @@
                     isDrawing = false;
                     map.dragging.enable();
                     if(tooltip) map.removeLayer(tooltip);
+                    
+                    if (currentPencilLine) {
+                         currentPencilLine.feature = { properties: { drawType: type, color: color } };
+                    }
+
+                    if (addZone && currentPencilLine) {
+                        const coords = currentPencilLine.getLatLngs().map(c => [c.lng, c.lat]);
+                        if (coords.length > 1) {
+                            calculateAndDrawMortarRange(coords, MORTAR_MIN_RANGE_METERS, MORTAR_MAX_RANGE_METERS);
+                        }
+                    }
                     stopDrawingMode();
                 };
 
@@ -1446,6 +1507,66 @@
                     map.dragging.enable();
                     if(tooltip) map.removeLayer(tooltip);
                 };
+            } else if (type === 'ruler') {
+                map.getContainer().classList.add('map-drawing-mode');
+                let points = [], rulerLine = null, tempLine = null, tooltip = null;
+
+                const onRulerMove = (e) => {
+                    if (points.length > 0) {
+                        if (tempLine) map.removeLayer(tempLine);
+                        tempLine = L.polyline([points[points.length - 1], e.latlng], { color: 'grey', dashArray: '5, 5' }).addTo(map);
+
+                        let totalDistance = 0;
+                        if (rulerLine) {
+                            totalDistance = turf.length(rulerLine.toGeoJSON(), { units: 'meters' });
+                        }
+                        totalDistance += points[points.length - 1].distanceTo(e.latlng);
+                        
+                        if (tooltip) { tooltip.setLatLng(e.latlng).setContent(formatDistance(totalDistance)); }
+                        else { tooltip = L.tooltip({ permanent: true, direction: 'right', className: 'drawing-tooltip' }).setLatLng(e.latlng).setContent(formatDistance(totalDistance)).addTo(map); }
+                    }
+                };
+
+                const onRulerClick = (e) => {
+                    points.push(e.latlng);
+                    if (!rulerLine) {
+                        const featureGroup = L.featureGroup().addTo(drawingsLayer);
+                        rulerLine = L.polyline(points, { color: color, weight: 3 }).addTo(featureGroup);
+                        rulerLine.feature = { properties: { drawType: type, color: color } };
+                    } else {
+                        rulerLine.setLatLngs(points);
+                    }
+                };
+
+                const onRulerFinish = () => {
+                    if (!rulerLine) { // Prevent finishing on a simple double click
+                        stopDrawingMode();
+                        return;
+                    }
+                    if(tempLine) map.removeLayer(tempLine);
+                    if(tooltip) map.removeLayer(tooltip);
+
+                    if (addZone) {
+                        const coords = rulerLine.getLatLngs().map(c => [c.lng, c.lat]);
+                        if (coords.length > 1) {
+                            calculateAndDrawMortarRange(coords, MORTAR_MIN_RANGE_METERS, MORTAR_MAX_RANGE_METERS);
+                        }
+                    }
+
+                    makePolylineEditable(rulerLine);
+                    stopDrawingMode();
+                };
+
+                map.on('mousemove', onRulerMove);
+                map.on('click', onRulerClick);
+                map.once('dblclick', onRulerFinish);
+
+                activeDrawCleanup = () => {
+                    map.off('mousemove', onRulerMove).off('click', onRulerClick).off('dblclick', onRulerFinish);
+                    if (tempLine) map.removeLayer(tempLine);
+                    if (tooltip) map.removeLayer(tooltip);
+                };
+
             } else { // Two-point logic for other tools
                 map.getContainer().classList.add('map-drawing-mode');
                 let points = [], tempLine = null, tooltip = null;
@@ -1465,12 +1586,19 @@
                     points.push(e.latlng);
                     if (points.length === 2) {
                         const featureGroup = L.featureGroup().addTo(drawingsLayer);
-                        const line = L.polyline(points, { color: color, weight: 3 }).addTo(featureGroup);
+                        const line = L.polyline(points, { color: color, weight: 3 });
+                        line.feature = { properties: { drawType: type, color: color } };
+                        line.addTo(featureGroup);
                         
                         switch (type) {
                             case 'arrow': L.polylineDecorator(line, { patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: color } }) }] }).addTo(featureGroup); break;
                             case 'repeating-arrow': L.polylineDecorator(line, { patterns: [{ offset: 15, repeat: 35, symbol: L.Symbol.arrowHead({ pixelSize: 10, pathOptions: { stroke: true, color: color } }) }] }).addTo(featureGroup); break;
                             case 'dashed-line': line.setStyle({ dashArray: '5, 10' }); break;
+                        }
+
+                        if (addZone) {
+                            const coords = line.getLatLngs().map(c => [c.lng, c.lat]);
+                            calculateAndDrawMortarRange(coords, MORTAR_MIN_RANGE_METERS, MORTAR_MAX_RANGE_METERS);
                         }
                         stopDrawingMode();
                     }
@@ -1485,6 +1613,30 @@
                 };
             }
         }
+        
+        function makePolylineEditable(polyline) {
+            const group = polyline._eventParents[Object.keys(polyline._eventParents)[0]];
+            const latlngs = polyline.getLatLngs();
+
+            const vertexMarkers = latlngs.map((latlng, index) => {
+                const marker = L.circleMarker(latlng, {
+                    radius: 6,
+                    color: 'white',
+                    weight: 2,
+                    fillColor: polyline.options.color,
+                    fillOpacity: 1,
+                    draggable: true
+                }).addTo(group);
+
+                marker.on('drag', (e) => {
+                    const newLatLngs = polyline.getLatLngs();
+                    newLatLngs[index] = e.target.getLatLng();
+                    polyline.setLatLngs(newLatLngs);
+                });
+                return marker;
+            });
+        }
+
 
         document.getElementById('drawing-modal-close-button').addEventListener('click', () => { drawingModalOverlay.classList.remove('visible'); stopDrawingMode(); });
         drawingModalOverlay.addEventListener('click', (e) => { if (e.target === drawingModalOverlay) { drawingModalOverlay.classList.remove('visible'); stopDrawingMode(); } });
@@ -1637,7 +1789,10 @@
                 savedRoutes = savedRoutes.filter(r => r.id !== routeId);
                 saveRoutesToStorage();
                 renderSavedRoutes();
-                mortarRangeLayer.clearLayers();
+                if (activeMortarZoneRouteId === routeId) {
+                    mortarRangeLayer.clearLayers();
+                    activeMortarZoneRouteId = null;
+                }
                 return;
             }
 
@@ -1802,21 +1957,99 @@
             }
         }
 
-        function exportGeoJson() {
-            const allFeatures = [
-                ...customPointsLayer.toGeoJSON().features,
-                ...drawingsLayer.toGeoJSON().features,
-                ...savedRoutesLayer.toGeoJSON().features,
-                ...Object.values(fileLayerGroups).flatMap(lg => lg.toGeoJSON().features),
-                ...(intersectionClusterGroup ? intersectionClusterGroup.toGeoJSON().features : [])
-            ];
-            if(allFeatures.length === 0) return;
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ type: "FeatureCollection", features: allFeatures }, null, 2));
+        // --- PROJECT SAVE/LOAD ---
+        function saveProject() {
+            const pointsData = [];
+            customPointsLayer.eachLayer(marker => {
+                pointsData.push({
+                    latlng: marker.getLatLng(),
+                    popupContent: marker.getPopup() ? marker.getPopup().getContent() : '',
+                    iconOptions: marker.options.icon.options
+                });
+            });
+
+            const projectData = {
+                savedRoutes: savedRoutes,
+                customPoints: pointsData,
+                drawings: drawingsLayer.toGeoJSON()
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(projectData, null, 2));
             const dl = document.createElement('a');
             dl.href = dataStr;
-            dl.download = `map_export_${new Date().toISOString().slice(0,10)}.geojson`;
+            dl.download = `map_project_${new Date().toISOString().slice(0,10)}.json`;
             dl.click();
             dl.remove();
+        }
+
+        function loadProject(data) {
+            try {
+                // Clear existing data
+                customPointsLayer.clearLayers();
+                drawingsLayer.clearLayers();
+                savedRoutes = [];
+                
+                // Load Routes
+                if (data.savedRoutes) {
+                    savedRoutes = data.savedRoutes;
+                    saveRoutesToStorage();
+                    renderSavedRoutes();
+                }
+
+                // Load Custom Points
+                if (data.customPoints) {
+                    data.customPoints.forEach(pointInfo => {
+                        let icon;
+                        if (pointInfo.iconOptions.html) { // It's a divIcon
+                            icon = L.divIcon(pointInfo.iconOptions);
+                        } else { // It's a regular Icon
+                            icon = L.icon(pointInfo.iconOptions);
+                        }
+                        L.marker(pointInfo.latlng, { icon: icon, draggable: true })
+                            .addTo(customPointsLayer)
+                            .bindPopup(pointInfo.popupContent);
+                    });
+                }
+                
+                // Load Drawings
+                if (data.drawings) {
+                    L.geoJSON(data.drawings, {
+                        onEachFeature: (feature, layer) => {
+                            const props = feature.properties;
+                            const featureGroup = L.featureGroup().addTo(drawingsLayer);
+
+                            if (layer instanceof L.Polyline) {
+                                layer.setStyle({
+                                    color: props.color || '#ff0000',
+                                    weight: 3
+                                });
+
+                                switch (props.drawType) {
+                                    case 'arrow':
+                                        L.polylineDecorator(layer, { patterns: [{ offset: '100%', symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { stroke: true, color: props.color } }) }] }).addTo(featureGroup);
+                                        break;
+                                    case 'repeating-arrow':
+                                        L.polylineDecorator(layer, { patterns: [{ offset: 15, repeat: 35, symbol: L.Symbol.arrowHead({ pixelSize: 10, pathOptions: { stroke: true, color: props.color } }) }] }).addTo(featureGroup);
+                                        break;
+                                    case 'dashed-line':
+                                        layer.setStyle({ dashArray: '5, 10' });
+                                        break;
+                                    case 'ruler':
+                                        makePolylineEditable(layer);
+                                        break;
+                                }
+                            }
+                            layer.addTo(featureGroup);
+                        }
+                    });
+                }
+                showAlert('Проєкт успішно завантажено.');
+            } catch (err) {
+                showAlert('Помилка при завантаженні проєкту. Файл може бути пошкоджено.');
+                console.error("Project Load Error:", err);
+            } finally {
+                loader.style.display = 'none';
+            }
         }
 
         // --- TOOLBAR MANAGEMENT ---
@@ -1830,7 +2063,7 @@
                 visibleButtonIds = JSON.parse(savedConfig);
             } else {
                 // Set a default configuration that includes the new button
-                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button', 'routing-button', 'goto-coords-button'];
+                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button', 'routing-button', 'goto-coords-button', 'upload-button', 'export-button'];
             }
         }
 
@@ -1843,7 +2076,7 @@
                     const newButton = template.cloneNode(true);
                     attachButtonListener(newButton);
                     newButton.style.top = `${60 + (index * (40 + 8))}px`;
-                    newButton.style.right = '10px';
+                    newButton.style.left = '10px';
                     makeDraggable(newButton);
                     fragment.appendChild(newButton);
                 }
@@ -1890,8 +2123,8 @@
                 case 'route-recorder-button': button.addEventListener('click', toggleRouteRecording); break;
                 case 'routing-button': button.addEventListener('click', startAutomaticRouting); break;
                 case 'goto-coords-button': button.addEventListener('click', () => gotoCoordsModal.classList.add('visible')); break;
-                case 'upload-button': button.addEventListener('click', () => logFileInput.click()); break;
-                case 'export-button': button.addEventListener('click', exportGeoJson); break;
+                case 'upload-button': button.addEventListener('click', () => fileInput.click()); break;
+                case 'export-button': button.addEventListener('click', saveProject); break;
                 case 'install-button': button.addEventListener('click', async () => {
                     if (deferredPrompt) {
                         deferredPrompt.prompt();
@@ -2219,6 +2452,10 @@
             loadSavedRoutes();
             loadButtonConfig();
             renderVisibleButtons();
+
+            // Make static buttons draggable
+            makeDraggable(document.getElementById('panel-toggle-button'));
+            makeDraggable(document.getElementById('toolbar-settings-button'));
             
             const savedTheme = localStorage.getItem('theme');
             toggleTheme(savedTheme || 'light');
@@ -2233,7 +2470,7 @@
                     .catch(e => console.log('SW reg failed', e));
             }
 
-            logFileInput.addEventListener('change', handleFileSelect);
+            fileInput.addEventListener('change', handleFileUpload);
         });
     </script>
 </body>
