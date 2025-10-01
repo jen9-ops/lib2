@@ -64,7 +64,7 @@
             height: 100%;
         }
 
-        .map-drawing-mode, .map-measuring-mode { cursor: crosshair !important; }
+        .map-drawing-mode { cursor: crosshair !important; }
         .map-erasing-mode { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="rgba(255, 59, 48, 0.9)" stroke="white" stroke-width="1.5" d="M20.71,6.29l-3-3a1,1,0,0,0-1.42,0L4.41,15.17a1,1,0,0,0,0,1.42L8.83,21a1,1,0,0,0,1.42,0L20.71,7.71A1,1,0,0,0,20.71,6.29ZM9.54,19.59l-4.42-4.42L12,8.3,16.3,12.59ZM17,11.17,12.83,7,15,4.83,19.17,9Z"/></svg>'), auto !important; }
 
 
@@ -245,6 +245,26 @@
         .layer-legend-color { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border-radius: 3px; vertical-align: middle;}
         .route-delete-btn { background: none; border: none; color: #ff3b30; cursor: pointer; font-size: 16px; opacity: 0.7; transition: opacity 0.2s; padding: 5px; }
         .route-delete-btn:hover { opacity: 1; }
+        .route-actions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .route-action-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.7;
+            transition: all 0.2s;
+            padding: 5px;
+        }
+        .route-action-btn:hover {
+            opacity: 1;
+            color: var(--accent-color);
+        }
+
 
         /* --- MODALS --- */
         .modal-overlay {
@@ -492,14 +512,19 @@
         
         #coords-display {
             position: absolute;
-            bottom: 0;
-            left: 0;
+            bottom: 10px;
+            left: 10px;
             z-index: 1000;
-            background: transparent;
-            padding: 4px 8px;
+            padding: 5px 10px;
             font-size: 12px;
+            line-height: 1.4;
             color: var(--text-color);
-            text-shadow: 0 0 3px var(--main-bg), 0 0 3px var(--main-bg), 0 0 3px var(--main-bg);
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px var(--shadow-color);
+            border-radius: 8px;
+            -webkit-backdrop-filter: var(--blur-effect);
+            backdrop-filter: var(--blur-effect);
         }
         
         .leaflet-control-zoom { background: transparent !important; border: none !important; box-shadow: none !important; }
@@ -510,7 +535,7 @@
         body.dark-theme .leaflet-control-layers { color: var(--text-color); }
         body.dark-theme .leaflet-control-layers-toggle { background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f5f5f7"%3E%3Cpath d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/%3E%3C/svg%3E') !important; }
         
-        .leaflet-tooltip.drawing-tooltip, .leaflet-tooltip.measure-tooltip {
+        .leaflet-tooltip.drawing-tooltip {
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
             color: var(--text-color);
@@ -543,7 +568,7 @@
             .modal-content { width: 95%; }
             #toolbar-settings-button { right: 5px; }
             .action-button, #panel-toggle-button { width: 40px; height: 40px; }
-            #coords-display { font-size: 10px; bottom: 30px; } /* Adjust for mobile zoom controls */
+            #coords-display { font-size: 10px; bottom: 35px; left: 5px; } /* Adjust for mobile zoom controls */
         }
         @media (max-height: 500px) and (orientation: landscape) { .panel-content { max-height: calc(100vh - 100px); } }
     </style>
@@ -567,13 +592,12 @@
         <button id="deepstate-button" class="action-button" title="Наложение на DeepState Map"><i class="fa-solid fa-layer-group"></i></button>
         <button id="add-point-button" class="action-button" title="Додати власну точку"><i class="fa-solid fa-map-pin"></i></button>
         <button id="draw-button" class="action-button" title="Інструменти малювання"><i class="fa-solid fa-pencil-ruler"></i></button>
-        <button id="measure-button" class="action-button" title="Лінійка"><i class="fa-solid fa-ruler-horizontal"></i></button>
         <button id="gps-button" class="action-button" title="Знайти моє місцеположення"><i class="fa-solid fa-location-crosshairs"></i></button>
         <button id="route-recorder-button" class="action-button" title="Запис маршруту"><i class="fa-solid fa-route"></i></button>
         <button id="routing-button" class="action-button" title="Прокласти маршрут (2 кліки)"><i class="fa-solid fa-diamond-turn-right"></i></button>
+        <button id="goto-coords-button" class="action-button" title="Перейти до координат"><i class="fa-solid fa-magnifying-glass-location"></i></button>
         <button id="upload-button" class="action-button" title="Завантажити логи"><i class="fa-solid fa-upload"></i></button>
         <button id="export-button" class="action-button" title="Експорт (GeoJSON)"><i class="fa-solid fa-file-export"></i></button>
-        <button id="share-button" class="action-button" title="Поделиться"><i class="fa-solid fa-share-nodes"></i></button>
         <button id="install-button" class="action-button" title="Встановити додаток"><i class="fa-solid fa-download"></i></button>
     </div>
 
@@ -592,8 +616,8 @@
     <div id="iframe-overlay" class="modal-overlay">
         <div class="iframe-container">
              <div class="iframe-controls">
-                <button id="transfer-coords-button" class="iframe-button" title="Перенести координати з центру екрана"><i class="fa-solid fa-crosshairs"></i> Перенести</button>
-                <button id="iframe-close-button" class="iframe-button" title="Закрити"><i class="fa-solid fa-xmark"></i></button>
+                 <button id="transfer-coords-button" class="iframe-button" title="Перенести координати з центру екрана"><i class="fa-solid fa-crosshairs"></i> Перенести</button>
+                 <button id="iframe-close-button" class="iframe-button" title="Закрити"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <iframe id="deepstate-iframe" src="https://deepstatemap.live" frameborder="0"></iframe>
             <div id="leaflet-overlay-map"></div>
@@ -602,8 +626,9 @@
     
     <input type="file" id="log-file-input" multiple accept=".json" style="display: none;">
     <div id="loader-overlay" class="hidden" style="display:none;"><div class="loader"></div></div>
-    <div id="coords-display">Lat: 0.00000, Lng: 0.00000</div>
+    <div id="coords-display">Lat: 0.00000, Lng: 0.00000<br>MGRS: N/A</div>
 
+    <!-- Toolbar Settings Modal -->
     <div id="toolbar-settings-modal-overlay" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close">&times;</button>
@@ -613,6 +638,7 @@
         </div>
     </div>
 
+    <!-- Event Details Modal -->
     <div id="event-modal-overlay" class="modal-overlay">
         <div id="event-modal-content" class="modal-content">
             <button id="modal-close-button" class="modal-close">&times;</button>
@@ -628,14 +654,16 @@
             </div>
         </div>
     </div>
+
+    <!-- Drawing Tools Modal -->
     <div id="drawing-modal-overlay" class="modal-overlay">
          <div id="drawing-modal-content" class="modal-content" style="max-width: 600px;">
             <button id="drawing-modal-close-button" class="modal-close">&times;</button>
             <h3>Інструменти малювання</h3>
             <p style="text-align: center; margin-top: -10px; opacity: 0.7;">Оберіть інструмент, колір, а потім малюйте на карті.</p>
              <div class="color-picker-container">
-                <label for="drawing-color-picker">Колір:</label>
-                <input type="color" id="drawing-color-picker" value="#ff4747">
+                 <label for="drawing-color-picker">Колір:</label>
+                 <input type="color" id="drawing-color-picker" value="#ff4747">
             </div>
             <div id="drawing-options">
                 <button class="draw-option-button" data-draw-type="pencil"><i class="fa-solid fa-pencil"></i><span>Карандаш</span></button>
@@ -646,6 +674,8 @@
             </div>
         </div>
     </div>
+
+    <!-- Custom Point Modal -->
     <div id="custom-point-modal-overlay" class="modal-overlay">
         <div id="custom-point-modal-content" class="modal-content" style="max-width: 450px;">
             <button id="custom-point-modal-close-button" class="modal-close">&times;</button>
@@ -699,9 +729,20 @@
                     <label><input type="radio" name="icon-background-processing" value="white-to-transparent"> Білий в прозорий</label>
                 </div>
             </div>
+            <div id="route-from-point-group" class="form-group" style="display: none; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <label>
+                    <input type="checkbox" id="create-route-checkbox"> Прокласти маршрут до цієї точки
+                </label>
+                <div id="route-from-select-container" style="display: none; margin-top: 10px;">
+                    <label for="route-from-point-select">Від точки:</label>
+                    <select id="route-from-point-select" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-color);"></select>
+                </div>
+            </div>
             <button id="place-point-submit" class="modal-submit-button">Розмістити точку</button>
         </div>
     </div>
+
+    <!-- Save Route Modal -->
     <div id="save-route-modal-overlay" class="modal-overlay">
         <div id="save-route-modal-content" class="modal-content" style="max-width: 400px;">
             <button id="save-route-modal-close-button" class="modal-close">&times;</button>
@@ -721,6 +762,27 @@
             </div>
         </div>
     </div>
+
+    <!-- Generic Alert Modal -->
+    <div id="alert-modal-overlay" class="modal-overlay">
+        <div class="modal-content" style="max-width: 350px; text-align: center;">
+            <p id="alert-modal-message" style="margin: 10px 0 25px 0; color: var(--text-color); font-size: 16px;"></p>
+            <button id="alert-modal-close" class="modal-submit-button" style="margin-top: 0;">OK</button>
+        </div>
+    </div>
+    
+    <!-- Go to Coords Modal -->
+    <div id="goto-coords-modal-overlay" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px;">
+            <button id="goto-coords-modal-close-button" class="modal-close">&times;</button>
+            <h3>Перейти до координат</h3>
+            <div class="form-group">
+                <label for="coords-input">Введіть Lat/Lng або MGRS:</label>
+                <input type="text" id="coords-input" placeholder="50.45, 30.52 або 36U UA 12345 67890">
+            </div>
+            <button id="goto-coords-submit" class="modal-submit-button">Перейти</button>
+        </div>
+    </div>
     
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
@@ -728,6 +790,7 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script src='https://unpkg.com/@turf/turf@6/turf.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mgrs/1.0.0/mgrs.min.js"></script>
 
 
     <script>
@@ -735,6 +798,10 @@
 
         // --- Global constants and variables ---
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwWLzQoJq0hfHer7Vsdk2xJe_Z7aNA4SRhiU0NWkMPv3IZAdcMFkyH-GrkXm6WK5SEZ/exec';
+        const SYNC_INTERVAL_MS = 30000;
+        const MORTAR_MIN_RANGE_METERS = 400;
+        const MORTAR_MAX_RANGE_METERS = 3500;
+
         let allLogsData = [], calendar, mapLayersControl, fileLayerGroups = {}, intersectionClusterGroup, selectedCalendarDate = null;
         let mapFeatures = {};
         let lastSyncRowCount = 0;
@@ -752,11 +819,11 @@
         // Routing and Range variables
         let routingControl = null;
         let mortarRangeLayer = L.layerGroup();
+        let activeMortarZoneRouteId = null;
         
-        // Drawing and Measurement variables
+        // Drawing variables
         let activeDrawCleanup = null;
-        let activeMeasureCleanup = null;
-        
+
         // --- Map and layers initialization ---
         const map = L.map('map', { zoomControl: false }).setView([50.41, 30.64], 11);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -784,6 +851,7 @@
         const customPointModal = document.getElementById('custom-point-modal-overlay');
         const drawingModalOverlay = document.getElementById('drawing-modal-overlay');
         const drawingOptions = document.getElementById('drawing-options');
+        const gotoCoordsModal = document.getElementById('goto-coords-modal-overlay');
         let overlayMap = null;
         let overlayLayersGroup = L.layerGroup();
         
@@ -799,17 +867,35 @@
             { id: 'deepstate-button', title: 'DeepState', icon: 'fa-solid fa-layer-group' },
             { id: 'add-point-button', title: 'Додати точку', icon: 'fa-solid fa-map-pin' },
             { id: 'draw-button', title: 'Малювання', icon: 'fa-solid fa-pencil-ruler' },
-            { id: 'measure-button', title: 'Лінійка', icon: 'fa-solid fa-ruler-horizontal' },
             { id: 'gps-button', title: 'Моє місце', icon: 'fa-solid fa-location-crosshairs' },
             { id: 'route-recorder-button', title: 'Запис маршруту', icon: 'fa-solid fa-route' },
             { id: 'routing-button', title: 'Авто-маршрут', icon: 'fa-solid fa-diamond-turn-right' },
+            { id: 'goto-coords-button', title: 'Перейти до координат', icon: 'fa-solid fa-magnifying-glass-location' },
             { id: 'upload-button', title: 'Завантажити лог', icon: 'fa-solid fa-upload' },
             { id: 'export-button', title: 'Експорт', icon: 'fa-solid fa-file-export' },
-            { id: 'share-button', title: 'Поділитися', icon: 'fa-solid fa-share-nodes' },
             { id: 'install-button', title: 'Встановити', icon: 'fa-solid fa-download' }
         ];
         
         let visibleButtonIds = [];
+
+        // --- ALERT MODAL LOGIC ---
+        const alertModalOverlay = document.getElementById('alert-modal-overlay');
+        const alertModalMessage = document.getElementById('alert-modal-message');
+        const alertModalClose = document.getElementById('alert-modal-close');
+
+        function showAlert(message) {
+            alertModalMessage.textContent = message;
+            alertModalOverlay.classList.add('visible');
+        }
+
+        function closeAlertModal() {
+            alertModalOverlay.classList.remove('visible');
+        }
+        alertModalClose.addEventListener('click', closeAlertModal);
+        alertModalOverlay.addEventListener('click', (e) => {
+            if (e.target === alertModalOverlay) closeAlertModal();
+        });
+
 
         // --- PWA INSTALL LOGIC ---
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -838,11 +924,12 @@
 
             body.classList.toggle('dark-theme', isDark);
             
+            const themeIconClass = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
             const themeIconInTemplate = buttonTemplates.querySelector('#theme-toggle-button i');
-            if (themeIconInTemplate) themeIconInTemplate.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            if (themeIconInTemplate) themeIconInTemplate.className = themeIconClass;
             
             const themeIconOnMap = actionButtonsContainer.querySelector('#theme-toggle-button i');
-            if (themeIconOnMap) themeIconOnMap.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            if (themeIconOnMap) themeIconOnMap.className = themeIconClass;
             
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
 
@@ -869,7 +956,16 @@
         iframeCloseButton.addEventListener('click', () => iframeOverlay.classList.remove('visible'));
         
         map.on('mousemove', (e) => {
-            coordsDisplay.innerHTML = `Lat: ${e.latlng.lat.toFixed(5)}, Lng: ${e.latlng.lng.toFixed(5)}`;
+            const lat = e.latlng.lat;
+            const lng = e.latlng.lng;
+            let mgrsString = 'N/A';
+            try {
+                // mgrs.forward takes [lon, lat]
+                mgrsString = mgrs.forward([lng, lat]);
+            } catch (err) {
+                // This can happen at the poles, etc.
+            }
+            coordsDisplay.innerHTML = `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}<br>MGRS: ${mgrsString}`;
         });
         
         // --- DRAGGABLE BUTTONS LOGIC ---
@@ -1211,13 +1307,13 @@
 
         function openEventModal(log, coordinates) {
              currentModalLog = { log: log, coordinates: coordinates };
-            document.getElementById('modal-title').textContent = log.name || 'Деталі події';
-            document.getElementById('modal-coords').textContent = `${coordinates[0].toFixed(5)}, ${coordinates[1].toFixed(5)}`;
-            const eventDate = new Date(log.timestamp);
-            document.getElementById('modal-datetime').textContent = eventDate.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
-            document.getElementById('modal-comment').textContent = log.comment || 'Немає';
-            eventModalOverlay.classList.add('visible');
-         }
+             document.getElementById('modal-title').textContent = log.name || 'Деталі події';
+             document.getElementById('modal-coords').textContent = `${coordinates[0].toFixed(5)}, ${coordinates[1].toFixed(5)}`;
+             const eventDate = new Date(log.timestamp);
+             document.getElementById('modal-datetime').textContent = eventDate.toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
+             document.getElementById('modal-comment').textContent = log.comment || 'Немає';
+             eventModalOverlay.classList.add('visible');
+           }
         function closeEventModal() { 
             eventModalOverlay.classList.remove('visible');
             currentModalLog = null;
@@ -1265,7 +1361,6 @@
                 } else {
                     line.setStyle({ dashArray: '5, 10' });
                 }
-                saveDrawings();
             };
             
             map.on('mousemove', onMouseMove);
@@ -1285,7 +1380,6 @@
         function handleEscKey(e) {
             if (e.key === "Escape") {
                 stopDrawingMode();
-                stopMeasurementTool();
             }
         }
 
@@ -1312,10 +1406,7 @@
                     const point2 = map.containerPointToLatLng(L.point(e.containerPoint.x + 15, e.containerPoint.y));
                     const tolerance = map.distance(point1, point2) / 1000;
 
-                    if (layerToDelete && minDistance < tolerance) { 
-                        drawingsLayer.removeLayer(layerToDelete); 
-                        saveDrawings();
-                    }
+                    if (layerToDelete && minDistance < tolerance) { drawingsLayer.removeLayer(layerToDelete); }
                 };
                 map.on('click', onEraseClick);
                 activeDrawCleanup = () => map.off('click', onEraseClick);
@@ -1337,7 +1428,6 @@
                     isDrawing = false;
                     map.dragging.enable();
                     if(tooltip) map.removeLayer(tooltip);
-                    saveDrawings();
                     stopDrawingMode();
                 };
 
@@ -1382,7 +1472,6 @@
                             case 'repeating-arrow': L.polylineDecorator(line, { patterns: [{ offset: 15, repeat: 35, symbol: L.Symbol.arrowHead({ pixelSize: 10, pathOptions: { stroke: true, color: color } }) }] }).addTo(featureGroup); break;
                             case 'dashed-line': line.setStyle({ dashArray: '5, 10' }); break;
                         }
-                        saveDrawings();
                         stopDrawingMode();
                     }
                 };
@@ -1410,7 +1499,7 @@
         });
         
         function getGpsLocation() {
-            navigator.geolocation.getCurrentPosition(pos => map.flyTo([pos.coords.latitude, pos.coords.longitude], 13), () => console.error("GPS Error"));
+            navigator.geolocation.getCurrentPosition(pos => map.flyTo([pos.coords.latitude, pos.coords.longitude], 13), () => showAlert("Не вдалося отримати GPS-координати."));
         }
 
         // --- ROUTE RECORDING LOGIC ---
@@ -1420,7 +1509,7 @@
 
             if (!isRecordingRoute) {
                 if (!navigator.geolocation) {
-                    alert("GPS-трекінг не підтримується вашим браузером.");
+                    showAlert("GPS-трекінг не підтримується вашим браузером.");
                     return;
                 }
                 
@@ -1457,7 +1546,7 @@
                     },
                     (error) => {
                         console.error("Помилка GPS:", error);
-                        alert("Не вдалося отримати GPS-координати.");
+                        showAlert("Не вдалося отримати GPS-координати.");
                         toggleRouteRecording(); // Stop on error
                     },
                     { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 }
@@ -1520,33 +1609,52 @@
                 const li = document.createElement('li');
                 li.dataset.routeId = route.id;
                 li.innerHTML = `
-                    <div>
+                    <span>
                         <span class="layer-legend-color" style="background-color: ${route.color};"></span>
                         <span><b>${route.name}</b> (${route.distance.toFixed(2)} км)</span>
+                    </span>
+                    <div class="route-actions">
+                         <button class="route-action-btn" data-action="show-zone" title="Показати зону ураження"><i class="fa-solid fa-bullseye"></i></button>
+                         <button class="route-delete-btn" title="Видалити маршрут"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
-                    <button class="route-delete-btn" title="Видалити маршрут"><i class="fa-solid fa-trash-can"></i></button>
                 `;
                 list.appendChild(li);
-
-                li.addEventListener('click', (e) => {
-                    if (e.target.closest('.route-delete-btn')) return;
-                    map.fitBounds(routeLine.getBounds());
-                });
             });
         }
 
         document.getElementById('routes-list').addEventListener('click', (e) => {
-            const deleteButton = e.target.closest('.route-delete-btn');
-            if (!deleteButton) return;
+            const li = e.target.closest('li');
+            if (!li || !li.dataset.routeId) return;
 
-            const li = deleteButton.closest('li');
             const routeId = li.dataset.routeId;
+            const route = savedRoutes.find(r => r.id === routeId);
+            if (!route) return;
+
+            const deleteButton = e.target.closest('.route-delete-btn');
+            const zoneButton = e.target.closest('.route-action-btn[data-action="show-zone"]');
+
+            if (deleteButton) {
+                savedRoutes = savedRoutes.filter(r => r.id !== routeId);
+                saveRoutesToStorage();
+                renderSavedRoutes();
+                mortarRangeLayer.clearLayers();
+                return;
+            }
+
+            if (zoneButton) {
+                const routeCoordsForTurf = route.latlngs.map(c => [c.lng, c.lat]);
+                calculateAndDrawMortarRange(routeCoordsForTurf, MORTAR_MIN_RANGE_METERS, MORTAR_MAX_RANGE_METERS, route.id);
+                const routeLine = L.polyline(route.latlngs);
+                map.fitBounds(routeLine.getBounds());
+                topPanel.classList.add('collapsed');
+                return;
+            }
             
-            savedRoutes = savedRoutes.filter(route => route.id !== routeId);
-            
-            saveRoutesToStorage();
-            renderSavedRoutes();
+            // Default click action: zoom to route
+            const routeLine = L.polyline(route.latlngs);
+            map.fitBounds(routeLine.getBounds());
         });
+
 
         const saveRouteModal = document.getElementById('save-route-modal-overlay');
         let tempRouteData = {};
@@ -1570,7 +1678,7 @@
             const name = document.getElementById('route-name-input').value.trim();
             const color = document.getElementById('route-color-picker').value;
             if (!name) {
-                alert('Будь ласка, введіть назву маршруту.');
+                showAlert('Будь ласка, введіть назву маршруту.');
                 return;
             }
 
@@ -1632,7 +1740,7 @@
                         if (routes.length > 0) {
                             const route = routes[0];
                             const routeCoordsForTurf = route.coordinates.map(c => [c.lng, c.lat]);
-                            calculateAndDrawMortarRange(routeCoordsForTurf, 400, 3500);
+                            calculateAndDrawMortarRange(routeCoordsForTurf, MORTAR_MIN_RANGE_METERS, MORTAR_MAX_RANGE_METERS, `temp-route-${Date.now()}`);
 
                             const container = routingControl.getContainer();
                             if (container) {
@@ -1659,7 +1767,12 @@
             map.on('click', onMapClick);
         }
 
-        function calculateAndDrawMortarRange(coords, minRange, maxRange) {
+        function calculateAndDrawMortarRange(coords, minRange, maxRange, routeId = null) {
+            if (routeId && activeMortarZoneRouteId === routeId) {
+                mortarRangeLayer.clearLayers();
+                activeMortarZoneRouteId = null;
+                return;
+            }
             mortarRangeLayer.clearLayers();
 
             try {
@@ -1681,71 +1794,13 @@
                         fillOpacity: 0.3
                     }
                 }).addTo(mortarRangeLayer);
+                activeMortarZoneRouteId = routeId;
             } catch (error) {
                 console.error("Помилка розрахунку зони ураження:", error);
-                alert("Не вдалося розрахувати зону ураження.");
+                showAlert("Не вдалося розрахувати зону ураження.");
+                activeMortarZoneRouteId = null;
             }
         }
-        
-        // --- MEASUREMENT TOOL ---
-        function stopMeasurementTool() {
-            if (activeMeasureCleanup) {
-                activeMeasureCleanup();
-                activeMeasureCleanup = null;
-            }
-            const measureButton = document.querySelector('#action-buttons #measure-button');
-            if(measureButton) measureButton.classList.remove('active');
-            map.getContainer().classList.remove('map-measuring-mode');
-            document.removeEventListener('keydown', handleEscKey);
-        }
-
-        function startMeasurementTool() {
-            if (activeMeasureCleanup) {
-                stopMeasurementTool();
-                return;
-            }
-            stopDrawingMode(); // Stop any other active tool
-            document.addEventListener('keydown', handleEscKey);
-
-            const measureButton = document.querySelector('#action-buttons #measure-button');
-            measureButton.classList.add('active');
-            map.getContainer().classList.add('map-measuring-mode');
-            
-            let points = [];
-            let tempLayer = L.layerGroup().addTo(map);
-            let tooltip = L.tooltip({ permanent: true, direction: 'right', className: 'measure-tooltip' });
-
-            const onMouseMove = (e) => {
-                if (points.length > 0) {
-                    tooltip.setLatLng(e.latlng).addTo(map);
-                    const tempLine = L.polyline([...points, e.latlng]);
-                    const totalDistance = turf.length(tempLine.toGeoJSON(), { units: 'meters' });
-                    tooltip.setContent(`Загальна довжина: ${formatDistance(totalDistance)}`);
-                }
-            };
-            
-            const onMapClick = (e) => {
-                points.push(e.latlng);
-                L.circle(e.latlng, { radius: 3, color: 'var(--accent-color)', fillOpacity: 1 }).addTo(tempLayer);
-                
-                if (points.length > 1) {
-                    tempLayer.clearLayers(); // Redraw everything to keep it clean
-                    points.forEach(p => L.circle(p, { radius: 4, color: 'var(--accent-color)', fillOpacity: 1 }).addTo(tempLayer));
-                    L.polyline(points, { color: 'var(--accent-color)', weight: 2, dashArray: '5, 5' }).addTo(tempLayer);
-                }
-            };
-            
-            map.on('mousemove', onMouseMove);
-            map.on('click', onMapClick);
-
-            activeMeasureCleanup = () => {
-                map.off('click', onMapClick);
-                map.off('mousemove', onMouseMove);
-                map.removeLayer(tempLayer);
-                map.removeLayer(tooltip);
-            };
-        }
-
 
         function exportGeoJson() {
             const allFeatures = [
@@ -1763,96 +1818,6 @@
             dl.click();
             dl.remove();
         }
-        
-        // --- SHARE FUNCTIONALITY ---
-        async function shareUserData() {
-            // 1. Собираем маршруты
-            const routesFeatures = savedRoutes.map(route => {
-                const coords = route.latlngs.map(ll => [('lng' in ll) ? ll.lng : ll[1], ('lat' in ll) ? ll.lat : ll[0]]);
-                return turf.lineString(coords, {
-                    name: route.name,
-                    color: route.color,
-                    distance: route.distance,
-                    dataType: 'route' // Пользовательское свойство для идентификации
-                });
-            });
-
-            // 2. Собираем пользовательские точки
-            const pointsGeoJSON = customPointsLayer.toGeoJSON();
-            pointsGeoJSON.features.forEach(feature => {
-                feature.properties.dataType = 'point';
-            });
-
-            // 3. Собираем рисунки (ИСПРАВЛЕННАЯ ЛОГИКА)
-            const drawingsFeatures = [];
-            drawingsLayer.eachLayer(group => {
-                let mainLayer, decorator;
-                group.eachLayer(l => {
-                    if (l instanceof L.PolylineDecorator) {
-                        decorator = l;
-                    } else if (l instanceof L.Polyline || l instanceof L.Marker) {
-                         mainLayer = l;
-                    }
-                });
-
-                if (mainLayer) {
-                    const feature = mainLayer.toGeoJSON();
-                    feature.properties.options = mainLayer.options;
-                    feature.properties.dataType = 'drawing';
-                    if (decorator) {
-                        feature.properties.decorator = decorator.options.patterns;
-                    }
-                    drawingsFeatures.push(feature);
-                }
-            });
-
-
-            const allUserFeatures = [
-                ...routesFeatures,
-                ...pointsGeoJSON.features,
-                ...drawingsFeatures
-            ];
-
-            if (allUserFeatures.length === 0) {
-                alert("Немає даних для поширення. Додайте точки, маршрути або малюнки.");
-                return;
-            }
-
-            const featureCollection = turf.featureCollection(allUserFeatures);
-            const jsonString = JSON.stringify(featureCollection, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const file = new File([blob], `map_data_${new Date().toISOString().slice(0,10)}.json`, { type: 'application/json' });
-            
-            // Web Share API для мобильных устройств
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        title: 'Мої дані з карти',
-                        text: 'Файл з маршрутами, точками та малюнками.',
-                        files: [file],
-                    });
-                } catch (error) {
-                    // Ошибку выводим в консоль, чтобы не мешать пользователю, если он нажал "отмена"
-                    console.error('Помилка поширення:', error);
-                }
-            } else {
-                // Запасной вариант для ПК - скачивание файла
-                try {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = file.name;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                } catch (error) {
-                    console.error('Помилка скачування файлу:', error);
-                    alert('Не вдалося скачати файл.');
-                }
-            }
-        }
-
 
         // --- TOOLBAR MANAGEMENT ---
         function saveButtonConfig() {
@@ -1864,7 +1829,8 @@
             if (savedConfig) {
                 visibleButtonIds = JSON.parse(savedConfig);
             } else {
-                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button', 'routing-button'];
+                // Set a default configuration that includes the new button
+                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button', 'routing-button', 'goto-coords-button'];
             }
         }
 
@@ -1916,16 +1882,16 @@
                 case 'deepstate-button': button.addEventListener('click', openDeepStateOverlay); break;
                 case 'add-point-button': button.addEventListener('click', () => {
                     populateIconCollectionGrid();
+                    populateRouteFromSelect();
                     customPointModal.classList.add('visible');
                 }); break;
                 case 'draw-button': button.addEventListener('click', () => drawingModalOverlay.classList.add('visible')); break;
-                case 'measure-button': button.addEventListener('click', startMeasurementTool); break;
                 case 'gps-button': button.addEventListener('click', getGpsLocation); break;
                 case 'route-recorder-button': button.addEventListener('click', toggleRouteRecording); break;
                 case 'routing-button': button.addEventListener('click', startAutomaticRouting); break;
+                case 'goto-coords-button': button.addEventListener('click', () => gotoCoordsModal.classList.add('visible')); break;
                 case 'upload-button': button.addEventListener('click', () => logFileInput.click()); break;
                 case 'export-button': button.addEventListener('click', exportGeoJson); break;
-                case 'share-button': button.addEventListener('click', shareUserData); break;
                 case 'install-button': button.addEventListener('click', async () => {
                     if (deferredPrompt) {
                         deferredPrompt.prompt();
@@ -1956,6 +1922,56 @@
                 renderVisibleButtons();
             }
         });
+
+        // --- GO TO COORDINATES LOGIC ---
+        function handleGoToCoords() {
+            const inputElement = document.getElementById('coords-input');
+            const input = inputElement.value.trim();
+            if (!input) return;
+
+            // Try parsing as Lat/Lng first (e.g., "50.45, 30.52" or "50.45 30.52")
+            const latLngRegex = /^(-?\d{1,2}(\.\d+)?)[, ]+(-?\d{1,3}(\.\d+)?)$/;
+            const match = input.match(latLngRegex);
+
+            if (match) {
+                const lat = parseFloat(match[1]);
+                const lng = parseFloat(match[3]);
+
+                if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                    map.flyTo([lat, lng], 15);
+                    gotoCoordsModal.classList.remove('visible');
+                    inputElement.value = '';
+                } else {
+                    showAlert('Некоректні координати. Перевірте значення широти (-90 to 90) та довготи (-180 to 180).');
+                }
+                return;
+            }
+
+            // If not Lat/Lng, try parsing as MGRS
+            try {
+                // The library expects [lon, lat]
+                const [lon, lat] = mgrs.toPoint(input);
+                 if (lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                    map.flyTo([lat, lon], 15);
+                    gotoCoordsModal.classList.remove('visible');
+                    inputElement.value = '';
+                } else {
+                     showAlert('Не вдалося конвертувати MGRS в коректні координати.');
+                }
+            } catch (e) {
+                showAlert('Невірний формат координат. Введіть у форматі "lat, lng" або коректний MGRS рядок.');
+                console.error("Coordinate parsing error:", e);
+            }
+        }
+        document.getElementById('goto-coords-modal-close-button').addEventListener('click', () => gotoCoordsModal.classList.remove('visible'));
+        gotoCoordsModal.addEventListener('click', (e) => { if (e.target === gotoCoordsModal) gotoCoordsModal.classList.remove('visible'); });
+        document.getElementById('goto-coords-submit').addEventListener('click', handleGoToCoords);
+        document.getElementById('coords-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                handleGoToCoords();
+            }
+        });
+
 
         // --- CUSTOM POINT MODAL LOGIC ---
         document.getElementById('custom-point-modal-close-button').addEventListener('click', () => customPointModal.classList.remove('visible'));
@@ -2044,7 +2060,10 @@
                 
                 case 'collection':
                     const selectedIcon = document.querySelector('.icon-collection-item.selected');
-                    if (!selectedIcon) { alert('Будь ласка, оберіть іконку з колекції.'); return Promise.reject(); }
+                    if (!selectedIcon) {
+                        showAlert('Будь ласка, оберіть іконку з колекції.');
+                        return; // Stop execution
+                    }
                     iconPromise = Promise.resolve(L.icon({ iconUrl: selectedIcon.src, iconSize: [32, 32], iconAnchor: [16, 32] }));
                     break;
 
@@ -2053,18 +2072,20 @@
                     break;
             }
 
+            if (!iconPromise) return;
+
             iconPromise.then(finalIcon => {
                 if (coordSource === 'manual') {
                     const lat = parseFloat(document.getElementById('point-lat-input').value);
                     const lng = parseFloat(document.getElementById('point-lng-input').value);
-                    if (isNaN(lat) || isNaN(lng)) { alert('Будь ласка, введіть коректні координати.'); return; }
+                    if (isNaN(lat) || isNaN(lng)) { showAlert('Будь ласка, введіть коректні координати.'); return; }
                     startMarkerPlacement(name, finalIcon, L.latLng(lat, lng));
                 } else {
                     startMarkerPlacement(name, finalIcon, null);
                 }
             }).catch(error => {
                 console.error("Помилка створення іконки:", error);
-                alert("Не вдалося створити іконку. Перевірте посилання або файл.");
+                showAlert("Не вдалося створити іконку. Перевірте посилання або файл.");
             });
         });
         
@@ -2072,103 +2093,93 @@
             const placeMarker = (pos) => {
                 const marker = L.marker(pos, { icon: icon, draggable: true }).addTo(customPointsLayer)
                     .bindPopup(`<b>${name}</b><br>Коорд: ${pos.lat.toFixed(5)}, ${pos.lng.toFixed(5)}`).openPopup();
-                 
-                // Save icon and popup info to the layer's GeoJSON properties
-                marker.feature = marker.feature || {};
-                marker.feature.type = "Feature";
-                marker.feature.properties = marker.feature.properties || {};
-                marker.feature.properties.popupContent = marker.getPopup().getContent();
-                marker.feature.properties.icon = {
-                    type: icon instanceof L.DivIcon ? 'div' : 'icon',
-                    options: icon.options
-                };
-                 
-                marker.on('dragend', saveCustomPoints);
-                saveCustomPoints();
                 map.getContainer().classList.remove('map-drawing-mode');
+        
+                const createRoute = document.getElementById('create-route-checkbox').checked;
+                if (createRoute) {
+                    const select = document.getElementById('route-from-point-select');
+                    if (select.value) {
+                        const startCoords = select.value.split(',').map(Number);
+                        const startLatLng = L.latLng(startCoords[0], startCoords[1]);
+                        const endLatLng = pos;
+        
+                        const tempRouting = L.Routing.control({
+                            waypoints: [startLatLng, endLatLng],
+                            createMarker: function() { return null; },
+                            lineOptions: {
+                                styles: [{color: 'var(--accent-color)', opacity: 0.8, weight: 6, dashArray: '10, 10'}]
+                            },
+                            router: L.Routing.osrmv1({ serviceUrl: `https://router.project-osrm.org/route/v1` }),
+                            addWaypoints: false,
+                            draggableWaypoints: false,
+                            show: false
+                        }).addTo(map);
+        
+                        tempRouting.on('routesfound', function(e) {
+                            const route = e.routes[0];
+                            if (route) {
+                                const routeLine = L.polyline(route.coordinates, {
+                                    color: 'var(--accent-color)',
+                                    weight: 4,
+                                    opacity: 0.8,
+                                    dashArray: '10, 10'
+                                });
+                                
+                                const featureGroup = L.featureGroup([routeLine]).addTo(drawingsLayer);
+        
+                                const distance = (route.summary.totalDistance / 1000).toFixed(2);
+                                const time = new Date(route.summary.totalTime * 1000).toISOString().substr(11, 8);
+                                featureGroup.bindPopup(`<b>Маршрут</b><br>Дистанція: ${distance} км<br>Час: ~${time}`);
+                            }
+                            map.removeControl(tempRouting);
+                        });
+                    }
+                }
             };
 
             customPointModal.classList.remove('visible');
             if (latlng) {
                 placeMarker(latlng);
             } else {
-                map.getContainer().classList.add('map-drawing-mode');
-                map.once('click', (e) => placeMarker(e.latlng));
+                 map.getContainer().classList.add('map-drawing-mode');
+                 map.once('click', (e) => placeMarker(e.latlng));
             }
         }
         
-        // --- LOCALSTORAGE PERSISTENCE ---
-        function saveCustomPoints() {
-            const data = customPointsLayer.toGeoJSON();
-            localStorage.setItem('customPoints', JSON.stringify(data));
-        }
-
-        function loadCustomPoints() {
-            const dataStr = localStorage.getItem('customPoints');
-            if (!dataStr) return;
+        function populateRouteFromSelect() {
+            const routeGroup = document.getElementById('route-from-point-group');
+            const selectContainer = document.getElementById('route-from-select-container');
+            const select = document.getElementById('route-from-point-select');
+            const checkbox = document.getElementById('create-route-checkbox');
             
-            const data = JSON.parse(dataStr);
-            L.geoJSON(data, {
-                pointToLayer: (feature, latlng) => {
-                    let icon;
-                    const iconInfo = feature.properties.icon;
-                    if (iconInfo && iconInfo.type === 'div') {
-                        icon = L.divIcon(iconInfo.options);
-                    } else if (iconInfo && iconInfo.type === 'icon') {
-                        icon = L.icon(iconInfo.options);
-                    }
-                    const marker = L.marker(latlng, { icon: icon, draggable: true });
+            select.innerHTML = '';
+            checkbox.checked = false;
+            selectContainer.style.display = 'none';
+
+            const points = customPointsLayer.getLayers();
+
+            if (points.length > 0) {
+                routeGroup.style.display = 'block';
+                points.forEach((marker, index) => {
+                    const popupContent = marker.getPopup()?.getContent();
+                    const nameMatch = popupContent?.match(/<b>(.*?)<\/b>/);
+                    const pointName = nameMatch ? nameMatch[1] : `Точка ${index + 1}`;
                     
-                    marker.on('dragend', saveCustomPoints);
-                    return marker;
-                },
-                onEachFeature: (feature, layer) => {
-                    if (feature.properties && feature.properties.popupContent) {
-                        layer.bindPopup(feature.properties.popupContent);
-                    }
-                    // Re-assign feature properties for saving later
-                    layer.feature = layer.feature || {};
-                    layer.feature.properties = feature.properties;
-                }
-            }).addTo(customPointsLayer);
-        }
-
-        function saveDrawings() {
-            // Leaflet.PolylineDecorator doesn't serialize to GeoJSON, so we store metadata
-            const data = { type: "FeatureCollection", features: [] };
-            drawingsLayer.eachLayer(group => {
-                let mainLayer, decorator;
-                group.eachLayer(l => {
-                    if (l instanceof L.PolylineDecorator) decorator = l; else mainLayer = l;
+                    const option = document.createElement('option');
+                    const latlng = marker.getLatLng();
+                    option.value = `${latlng.lat},${latlng.lng}`;
+                    option.textContent = pointName;
+                    select.appendChild(option);
                 });
-                if(mainLayer){
-                    const feature = mainLayer.toGeoJSON();
-                    feature.properties.options = mainLayer.options;
-                    if (decorator) {
-                        feature.properties.decorator = decorator.options.patterns;
-                    }
-                    data.features.push(feature);
-                }
-            });
-            localStorage.setItem('drawings', JSON.stringify(data));
+            } else {
+                routeGroup.style.display = 'none';
+            }
         }
 
-        function loadDrawings() {
-            const dataStr = localStorage.getItem('drawings');
-            if (!dataStr) return;
+        document.getElementById('create-route-checkbox').addEventListener('change', (e) => {
+            document.getElementById('route-from-select-container').style.display = e.target.checked ? 'block' : 'none';
+        });
 
-            const data = JSON.parse(dataStr);
-            L.geoJSON(data, {
-                onEachFeature: (feature, layer) => {
-                    const featureGroup = L.featureGroup().addTo(drawingsLayer);
-                    const line = L.polyline(layer.getLatLngs(), feature.properties.options).addTo(featureGroup);
-                    if (feature.properties.decorator) {
-                        L.polylineDecorator(line, { patterns: feature.properties.decorator }).addTo(featureGroup);
-                    }
-                }
-            });
-        }
-        
         // --- ICON COLLECTION LOGIC ---
         function loadCustomIcons() {
             const saved = localStorage.getItem('customIconCollection');
@@ -2206,8 +2217,6 @@
         window.addEventListener('load', () => {
             loadCustomIcons();
             loadSavedRoutes();
-            loadCustomPoints();
-            loadDrawings();
             loadButtonConfig();
             renderVisibleButtons();
             
@@ -2215,14 +2224,18 @@
             toggleTheme(savedTheme || 'light');
             
             fetchDataFromSheet();
-            setInterval(() => fetchDataFromSheet(true), 30000);
+            setInterval(() => fetchDataFromSheet(true), SYNC_INTERVAL_MS);
+
+            // Register Service Worker
+            if ('serviceWorker' in navigator) {
+                 navigator.serviceWorker.register('/sw.js')
+                    .then(r => console.log('SW registered'))
+                    .catch(e => console.log('SW reg failed', e));
+            }
+
+            logFileInput.addEventListener('change', handleFileSelect);
         });
-        
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').then(r => console.log('SW registered')).catch(e => console.log('SW reg failed', e));
-            });
-        }
     </script>
 </body>
-    </html>
+</html>
+
