@@ -347,6 +347,23 @@
         #modal-actions button:hover {
             background-color: #0056b3;
         }
+        #alert-modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        #alert-modal-buttons button {
+            flex-grow: 1;
+            margin-top: 0;
+        }
+        .modal-button-secondary {
+            background-color: #8e8e93 !important;
+        }
+        .modal-button-secondary:hover {
+            background-color: #6d6d72 !important;
+        }
+
 
         /* --- TOOLBAR SETTINGS MODAL --- */
         #toolbar-button-list {
@@ -510,6 +527,48 @@
             font-size: 16px;
         }
 
+        /* --- Live Trip Status Bar --- */
+        #trip-status-bar {
+            position: fixed;
+            top: -100px; /* Initially hidden */
+            left: 0;
+            width: 100%;
+            z-index: 2000;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 8px;
+            font-size: 14px;
+            transition: top 0.4s ease-in-out;
+        }
+        #trip-status-bar.visible {
+            top: 0;
+        }
+        #trip-status-bar .status-text {
+            font-weight: 600;
+            padding: 5px 10px;
+            border-radius: 6px;
+            color: white;
+            transition: background-color 0.5s;
+        }
+        #trip-status-bar.on-time .status-text { background-color: #34c759; }
+        #trip-status-bar.warning .status-text { background-color: #ff9500; }
+        #trip-status-bar.late .status-text { background-color: #ff3b30; }
+        
+        #end-trip-button {
+            background: #ff3b30;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
         /* --- OTHER STYLES & LEAFLET OVERRIDES --- */
         #loader-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); z-index: 3000; display: flex; justify-content: center; align-items: center; }
         .loader { border: 8px solid #f3f3f3; border-radius: 50%; border-top: 8px solid var(--accent-color); width: 60px; height: 60px; animation: spin 1s linear infinite; }
@@ -530,6 +589,32 @@
             border-radius: 8px;
             -webkit-backdrop-filter: var(--blur-effect);
             backdrop-filter: var(--blur-effect);
+        }
+        
+        /* --- Weather Widget --- */
+        #weather-widget {
+            position: absolute;
+            bottom: 40px; /* Розташування над кнопками зуму */
+            right: 10px;
+            z-index: 1000;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Трохи збільшимо відступ */
+        }
+        .weather-icon {
+            font-size: 36px; /* Розмір іконки */
+            width: 40px;
+            text-align: center;
+            color: var(--accent-color);
+        }
+        .weather-info {
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        .weather-info strong {
+            font-size: 16px;
+            font-weight: 600;
         }
         
         .leaflet-control-zoom { background: transparent !important; border: none !important; box-shadow: none !important; }
@@ -574,12 +659,21 @@
             #toolbar-settings-button { right: 5px; }
             .action-button, #panel-toggle-button { width: 40px; height: 40px; }
             #coords-display { font-size: 10px; bottom: 35px; left: 5px; } /* Adjust for mobile zoom controls */
+            #weather-widget { bottom: 75px; right: 5px; padding: 5px 8px; gap: 8px;} /* Adjust for mobile zoom controls */
+            #trip-status-bar { flex-direction: column; gap: 5px; text-align: center;}
         }
         @media (max-height: 500px) and (orientation: landscape) { .panel-content { max-height: calc(100vh - 100px); } }
     </style>
 </head>
 <body>
     <div id="map"></div>
+    <div id="weather-widget" class="ui-element"></div>
+
+    <div id="trip-status-bar">
+        <span class="status-text">Оновлення...</span>
+        <span class="eta-text">ETA: --:--</span>
+        <button id="end-trip-button">Завершити поїздку</button>
+    </div>
 
     <div id="panel-toggle-container">
         <button id="panel-toggle-button" title="Аналітична панель">
@@ -600,6 +694,7 @@
         <button id="gps-button" class="action-button" title="Знайти моє місцеположення"><i class="fa-solid fa-location-crosshairs"></i></button>
         <button id="route-recorder-button" class="action-button" title="Запис маршруту"><i class="fa-solid fa-route"></i></button>
         <button id="routing-button" class="action-button" title="Прокласти маршрут (2 кліки)"><i class="fa-solid fa-diamond-turn-right"></i></button>
+        <button id="daylight-trip-button" class="action-button" title="Розрахунок денного маршруту"><i class="fa-solid fa-sun-haze"></i></button>
         <button id="goto-coords-button" class="action-button" title="Перейти до координат"><i class="fa-solid fa-magnifying-glass-location"></i></button>
         <button id="upload-button" class="action-button" title="Завантажити проєкт / лог"><i class="fa-solid fa-upload"></i></button>
         <button id="export-button" class="action-button" title="Зберегти проєкт"><i class="fa-solid fa-file-export"></i></button>
@@ -623,7 +718,7 @@
              <div class="iframe-controls">
                  <button id="transfer-coords-button" class="iframe-button" title="Перенести координати з центру екрана"><i class="fa-solid fa-crosshairs"></i> Перенести</button>
                  <button id="iframe-close-button" class="iframe-button" title="Закрити"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+             </div>
             <iframe id="deepstate-iframe" src="https://deepstatemap.live" frameborder="0"></iframe>
             <div id="leaflet-overlay-map"></div>
         </div>
@@ -633,7 +728,6 @@
     <div id="loader-overlay" class="hidden" style="display:none;"><div class="loader"></div></div>
     <div id="coords-display">Lat: 0.00000, Lng: 0.00000<br>MGRS: N/A</div>
 
-    <!-- Toolbar Settings Modal -->
     <div id="toolbar-settings-modal-overlay" class="modal-overlay">
         <div class="modal-content">
             <button class="modal-close">&times;</button>
@@ -643,7 +737,6 @@
         </div>
     </div>
 
-    <!-- Event Details Modal -->
     <div id="event-modal-overlay" class="modal-overlay">
         <div id="event-modal-content" class="modal-content">
             <button id="modal-close-button" class="modal-close">&times;</button>
@@ -660,7 +753,6 @@
         </div>
     </div>
 
-    <!-- Drawing Tools Modal -->
     <div id="drawing-modal-overlay" class="modal-overlay">
          <div id="drawing-modal-content" class="modal-content" style="max-width: 600px;">
             <button id="drawing-modal-close-button" class="modal-close">&times;</button>
@@ -669,7 +761,7 @@
              <div class="color-picker-container">
                  <label for="drawing-color-picker">Колір:</label>
                  <input type="color" id="drawing-color-picker" value="#ff4747">
-            </div>
+             </div>
             <div id="drawing-options">
                 <button class="draw-option-button" data-draw-type="pencil"><i class="fa-solid fa-pencil"></i><span>Карандаш</span></button>
                 <button class="draw-option-button" data-draw-type="ruler"><i class="fa-solid fa-ruler-horizontal"></i><span>Лінійка</span></button>
@@ -686,7 +778,6 @@
         </div>
     </div>
 
-    <!-- Custom Point Modal -->
     <div id="custom-point-modal-overlay" class="modal-overlay">
         <div id="custom-point-modal-content" class="modal-content" style="max-width: 450px;">
             <button id="custom-point-modal-close-button" class="modal-close">&times;</button>
@@ -753,7 +844,6 @@
         </div>
     </div>
 
-    <!-- Save Route Modal -->
     <div id="save-route-modal-overlay" class="modal-overlay">
         <div id="save-route-modal-content" class="modal-content" style="max-width: 400px;">
             <button id="save-route-modal-close-button" class="modal-close">&times;</button>
@@ -774,15 +864,15 @@
         </div>
     </div>
 
-    <!-- Generic Alert Modal -->
     <div id="alert-modal-overlay" class="modal-overlay">
-        <div class="modal-content" style="max-width: 350px; text-align: center;">
-            <p id="alert-modal-message" style="margin: 10px 0 25px 0; color: var(--text-color); font-size: 16px;"></p>
-            <button id="alert-modal-close" class="modal-submit-button" style="margin-top: 0;">OK</button>
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <p id="alert-modal-message" style="margin: 10px 0 15px 0; color: var(--text-color); font-size: 16px; white-space: pre-wrap;"></p>
+            <div id="alert-modal-buttons">
+                <button id="alert-modal-close" class="modal-submit-button">OK</button>
+            </div>
         </div>
     </div>
     
-    <!-- Go to Coords Modal -->
     <div id="goto-coords-modal-overlay" class="modal-overlay">
         <div class="modal-content" style="max-width: 400px;">
             <button id="goto-coords-modal-close-button" class="modal-close">&times;</button>
@@ -792,6 +882,19 @@
                 <input type="text" id="coords-input" placeholder="50.45, 30.52 або 36U UA 12345 67890">
             </div>
             <button id="goto-coords-submit" class="modal-submit-button">Перейти</button>
+        </div>
+    </div>
+
+    <div id="daylight-trip-modal-overlay" class="modal-overlay">
+        <div class="modal-content" style="max-width: 400px;">
+            <button id="daylight-trip-modal-close-button" class="modal-close">&times;</button>
+            <h3>Розрахунок маршруту до світанку</h3>
+            <div class="form-group">
+                <label for="avg-speed-input">Ваша середня швидкість (км/год):</label>
+                <input type="number" id="avg-speed-input" value="15">
+            </div>
+            <p style="font-size: 13px; opacity: 0.8; margin-top: -10px;">Введіть середню швидкість руху, щоб розрахувати час на маршрут. Після цього вкажіть на карті точки А і Б.</p>
+            <button id="daylight-trip-submit" class="modal-submit-button">Почати планування</button>
         </div>
     </div>
     
@@ -835,8 +938,14 @@
         // Drawing variables
         let activeDrawCleanup = null;
 
+        // Live trip variables
+        let isLiveTripActive = false;
+        let liveTripWatchId = null;
+        let tripData = {};
+
+
         // --- Map and layers initialization ---
-        const map = L.map('map', { zoomControl: false }).setView([50.41, 30.64], 11);
+        const map = L.map('map', { zoomControl: false }); // .setView(...) буде викликано пізніше
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         const baseLayers = {
             "Стандартна": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OSM' }),
@@ -863,6 +972,8 @@
         const drawingModalOverlay = document.getElementById('drawing-modal-overlay');
         const drawingOptions = document.getElementById('drawing-options');
         const gotoCoordsModal = document.getElementById('goto-coords-modal-overlay');
+        const daylightTripModal = document.getElementById('daylight-trip-modal-overlay');
+        const tripStatusBar = document.getElementById('trip-status-bar');
         let overlayMap = null;
         let overlayLayersGroup = L.layerGroup();
         
@@ -881,6 +992,7 @@
             { id: 'gps-button', title: 'Моє місце', icon: 'fa-solid fa-location-crosshairs' },
             { id: 'route-recorder-button', title: 'Запис маршруту', icon: 'fa-solid fa-route' },
             { id: 'routing-button', title: 'Авто-маршрут', icon: 'fa-solid fa-diamond-turn-right' },
+            { id: 'daylight-trip-button', title: 'Розрахунок денного маршруту', icon: 'fa-solid fa-sun-haze' },
             { id: 'goto-coords-button', title: 'Перейти до координат', icon: 'fa-solid fa-magnifying-glass-location' },
             { id: 'upload-button', title: 'Завантажити проєкт / лог', icon: 'fa-solid fa-upload' },
             { id: 'export-button', title: 'Зберегти проєкт', icon: 'fa-solid fa-file-export' },
@@ -892,17 +1004,37 @@
         // --- ALERT MODAL LOGIC ---
         const alertModalOverlay = document.getElementById('alert-modal-overlay');
         const alertModalMessage = document.getElementById('alert-modal-message');
-        const alertModalClose = document.getElementById('alert-modal-close');
+        const alertModalButtons = document.getElementById('alert-modal-buttons');
+
+        function showAlertWithOptions(message, options = []) {
+            alertModalMessage.innerHTML = message;
+            alertModalButtons.innerHTML = ''; // Clear previous buttons
+
+            if (options.length === 0) {
+                options.push({ text: 'OK', callback: closeAlertModal });
+            }
+
+            options.forEach(opt => {
+                const button = document.createElement('button');
+                button.className = `modal-submit-button ${opt.className || ''}`;
+                button.textContent = opt.text;
+                button.onclick = () => {
+                    if (opt.callback) opt.callback();
+                    closeAlertModal();
+                };
+                alertModalButtons.appendChild(button);
+            });
+            
+            alertModalOverlay.classList.add('visible');
+        }
 
         function showAlert(message) {
-            alertModalMessage.textContent = message;
-            alertModalOverlay.classList.add('visible');
+            showAlertWithOptions(message);
         }
 
         function closeAlertModal() {
             alertModalOverlay.classList.remove('visible');
         }
-        alertModalClose.addEventListener('click', closeAlertModal);
         alertModalOverlay.addEventListener('click', (e) => {
             if (e.target === alertModalOverlay) closeAlertModal();
         });
@@ -1052,6 +1184,78 @@
                 return `${(meters / 1000).toFixed(2)} км`;
             }
         }
+        
+        // --- Початок коду для погоди ---
+
+        // Функція для перетворення коду погоди WMO на опис та іконку
+        function getWeatherInterpretation(wmoCode) {
+            const interpretations = {
+                0: { description: 'Ясно', icon: 'fa-solid fa-sun' },
+                1: { description: 'Переважно ясно', icon: 'fa-solid fa-cloud-sun' },
+                2: { description: 'Мінлива хмарність', icon: 'fa-solid fa-cloud' },
+                3: { description: 'Хмарно', icon: 'fa-solid fa-cloud' },
+                45: { description: 'Туман', icon: 'fa-solid fa-smog' },
+                48: { description: 'Паморозь', icon: 'fa-solid fa-snowflake' },
+                51: { description: 'Мряка', icon: 'fa-solid fa-cloud-rain' },
+                53: { description: 'Мряка', icon: 'fa-solid fa-cloud-rain' },
+                55: { description: 'Сильна мряка', icon: 'fa-solid fa-cloud-rain' },
+                61: { description: 'Невеликий дощ', icon: 'fa-solid fa-cloud-showers-heavy' },
+                63: { description: 'Помірний дощ', icon: 'fa-solid fa-cloud-showers-heavy' },
+                65: { description: 'Сильний дощ', icon: 'fa-solid fa-cloud-showers-heavy' },
+                71: { description: 'Невеликий сніг', icon: 'fa-solid fa-snowflake' },
+                73: { description: 'Помірний сніг', icon: 'fa-solid fa-snowflake' },
+                75: { description: 'Сильний сніг', icon: 'fa-solid fa-snowflake' },
+                80: { description: 'Невелика злива', icon: 'fa-solid fa-cloud-showers-heavy' },
+                81: { description: 'Помірна злива', icon: 'fa-solid fa-cloud-showers-heavy' },
+                82: { description: 'Сильна злива', icon: 'fa-solid fa-cloud-showers-heavy' },
+                95: { description: 'Гроза', icon: 'fa-solid fa-cloud-bolt' },
+                96: { description: 'Гроза з градом', icon: 'fa-solid fa-cloud-bolt' },
+                99: { description: 'Сильна гроза', icon: 'fa-solid fa-cloud-bolt' }
+            };
+            return interpretations[wmoCode] || { description: 'Невідомо', icon: 'fa-solid fa-question' };
+        }
+
+        // Функція для оновлення HTML-віджета даними
+        function updateWeatherWidget(data) {
+            if (!data || !data.current) return;
+
+            const widget = document.getElementById('weather-widget');
+            const interpretation = getWeatherInterpretation(data.current.weather_code);
+            const temp = Math.round(data.current.temperature_2m);
+            // API віддає км/г, конвертуємо в м/с
+            const windSpeed = (data.current.wind_speed_10m / 3.6).toFixed(1);
+
+            widget.innerHTML = `
+                <div class="weather-icon">
+                    <i class="${interpretation.icon}"></i>
+                </div>
+                <div class="weather-info">
+                    <strong>${temp}°C</strong><br>
+                    <span style="text-transform: capitalize;">${interpretation.description}</span><br>
+                    Вітер: ${windSpeed} м/с
+                </div>
+            `;
+        }
+        
+        // Функція для запиту погоди з Open-Meteo API
+        function fetchWeather(lat, lon) {
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m&timezone=auto`;
+            
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error('Помилка запиту погоди');
+                    return response.json();
+                })
+                .then(data => {
+                    updateWeatherWidget(data);
+                })
+                .catch(error => {
+                    console.error('Не вдалося отримати погоду:', error);
+                    const widget = document.getElementById('weather-widget');
+                    widget.innerHTML = `<div class="weather-info">Помилка завантаження погоди</div>`;
+                });
+        }
+        // --- Кінець коду для погоди ---
 
 
         // --- DATA HANDLING ---
@@ -1894,6 +2098,9 @@
                         const routes = e.routes;
                         if (routes.length > 0) {
                             const route = routes[0];
+                            // Clone route to drawings layer to be visible on DeepState overlay
+                            L.polyline(route.coordinates, { color: 'var(--accent-color)', opacity: 0.8, weight: 6 }).addTo(drawingsLayer);
+
                             const routeCoordsForTurf = route.coordinates.map(c => [c.lng, c.lat]);
                             calculateAndDrawMortarRange(routeCoordsForTurf, MORTAR_MIN_RANGE_METERS, MORTAR_MAX_RANGE_METERS, `temp-route-${Date.now()}`);
 
@@ -1956,6 +2163,193 @@
                 activeMortarZoneRouteId = null;
             }
         }
+        
+        // --- DAYLIGHT TRIP LOGIC ---
+        function startDaylightTripPlanning() {
+            const speedInput = document.getElementById('avg-speed-input');
+            const avgSpeedKmh = parseFloat(speedInput.value);
+
+            if (isNaN(avgSpeedKmh) || avgSpeedKmh <= 0) {
+                showAlert("Будь ласка, введіть коректну середню швидкість.");
+                return;
+            }
+            
+            daylightTripModal.classList.remove('visible');
+            showAlert('Тепер клікніть на карті, щоб обрати <b>точку А</b> (старт), а потім <b>точку Б</b> (пункт призначення).');
+            map.getContainer().classList.add('map-drawing-mode');
+
+            let waypoints = [];
+            const tempMarkers = L.layerGroup().addTo(map);
+
+            const onMapClickForTrip = (e) => {
+                waypoints.push(e.latlng);
+                const markerLabel = waypoints.length === 1 ? 'A' : 'B';
+                L.marker(e.latlng, {
+                    icon: L.divIcon({
+                        className: 'leaflet-div-icon',
+                        html: `<div style="background-color: var(--accent-color); color: white; border-radius: 50%; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.5);">${markerLabel}</div>`,
+                        iconSize: [25, 25],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(tempMarkers);
+
+                if (waypoints.length === 2) {
+                    map.off('click', onMapClickForTrip);
+                    map.getContainer().classList.remove('map-drawing-mode');
+                    calculateDaylightTrip(waypoints[0], waypoints[1], avgSpeedKmh, tempMarkers);
+                }
+            };
+            map.on('click', onMapClickForTrip);
+        }
+
+        async function calculateDaylightTrip(startPoint, endPoint, avgSpeedKmh, tempMarkersLayer) {
+            loader.style.display = 'flex';
+
+            try {
+                // Fetch sunrise for tomorrow to calculate time until next dawn
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const year = tomorrow.getFullYear();
+                const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                const day = String(tomorrow.getDate()).padStart(2, '0');
+                const dateString = `${year}-${month}-${day}`;
+
+                const sunriseResponse = await fetch(`https://api.sunrise-sunset.org/json?lat=${startPoint.lat}&lng=${startPoint.lng}&date=${dateString}&formatted=0`);
+                if (!sunriseResponse.ok) throw new Error('Не вдалося отримати час світанку.');
+                const sunriseData = await sunriseResponse.json();
+                const sunriseTime = new Date(sunriseData.results.sunrise);
+
+                // Get route distance
+                const routeUrl = `https://router.project-osrm.org/route/v1/driving/${startPoint.lng},${startPoint.lat};${endPoint.lng},${endPoint.lat}?overview=false`;
+                const routeResponse = await fetch(routeUrl);
+                if (!routeResponse.ok) throw new Error('Не вдалося прокласти маршрут.');
+                const routeData = await routeResponse.json();
+                const oneWayDistanceMeters = routeData.routes[0].distance;
+                
+                const roundTripDistanceKm = (oneWayDistanceMeters * 2) / 1000;
+                const roundTripTimeHours = roundTripDistanceKm / avgSpeedKmh;
+                const roundTripTimeSeconds = roundTripTimeHours * 3600;
+
+                const currentTime = new Date();
+                const etaTime = new Date(currentTime.getTime() + roundTripTimeSeconds * 1000);
+                const timeUntilSunriseSeconds = (sunriseTime - currentTime) / 1000;
+                const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
+
+                let resultMessage = `<b>Розрахунок до світанку (швидкість ${avgSpeedKmh} км/год):</b>\n\n`;
+                resultMessage += `<b>Відстань туди й назад:</b> ${roundTripDistanceKm.toFixed(1)} км\n`;
+                resultMessage += `<b>Час в дорозі:</b> ${Math.floor(roundTripTimeHours)} год ${Math.round((roundTripTimeHours % 1) * 60)} хв\n`;
+                resultMessage += `<b>Час повернення (ЕТА):</b> ${timeFormatter.format(etaTime)}\n`;
+                resultMessage += `<b>Світанок завтра:</b> ${timeFormatter.format(sunriseTime)}\n\n`;
+
+                const modalOptions = [
+                    { text: 'Закрити', className: 'modal-button-secondary', callback: () => tempMarkersLayer.clearLayers() }
+                ];
+
+                if (etaTime < sunriseTime) {
+                    const timeBufferSeconds = timeUntilSunriseSeconds - roundTripTimeSeconds;
+                    const bufferHours = Math.floor(timeBufferSeconds / 3600);
+                    const bufferMinutes = Math.round((timeBufferSeconds % 3600) / 60);
+                    resultMessage += `<b style="color: green;">✅ ВИСНОВОК: Так, ви встигаєте.</b>\n`;
+                    resultMessage += `У вас буде в запасі приблизно ${bufferHours} год ${bufferMinutes} хв.`;
+                    modalOptions.unshift({ text: 'Почати поїздку', callback: () => {
+                        beginLiveTripTracking({ startPoint, endPoint, avgSpeedKmh, targetTime: sunriseTime });
+                        tempMarkersLayer.clearLayers();
+                    }});
+                } else {
+                    const timeShortfallSeconds = roundTripTimeSeconds - timeUntilSunriseSeconds;
+                    const shortfallHours = Math.floor(timeShortfallSeconds / 3600);
+                    const shortfallMinutes = Math.round((timeShortfallSeconds % 3600) / 60);
+                    resultMessage += `<b style="color: red;">❌ ВИСНОВОК: Ні, ви не встигаєте.</b>\n`;
+                    resultMessage += `Вам не вистачить приблизно ${shortfallHours} год ${shortfallMinutes} хв.`;
+                }
+
+                showAlertWithOptions(resultMessage, modalOptions);
+
+            } catch (error) {
+                console.error("Daylight trip calculation error:", error);
+                showAlert(`Помилка розрахунку: ${error.message}`);
+                 tempMarkersLayer.clearLayers();
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function beginLiveTripTracking(data) {
+            if (!navigator.geolocation) {
+                showAlert('GPS-стеження не підтримується для оновлення статусу.');
+                return;
+            }
+            isLiveTripActive = true;
+            tripData = data;
+            tripStatusBar.classList.add('visible');
+            
+            liveTripWatchId = navigator.geolocation.watchPosition(
+                updateLiveTripStatus, 
+                (err) => { 
+                    console.error("Помилка стеження GPS:", err);
+                    tripStatusBar.querySelector('.status-text').textContent = "Помилка GPS";
+                    tripStatusBar.className = 'late visible';
+                }, 
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+        }
+
+        async function updateLiveTripStatus(position) {
+            if (!isLiveTripActive) return;
+
+            const { latitude, longitude } = position.coords;
+            const currentPos = L.latLng(latitude, longitude);
+            const { startPoint, endPoint, avgSpeedKmh, targetTime } = tripData;
+            
+            try {
+                // Calculate remaining distance: current -> B -> A
+                const routeUrl = `https://router.project-osrm.org/route/v1/driving/${currentPos.lng},${currentPos.lat};${endPoint.lng},${endPoint.lat};${startPoint.lng},${startPoint.lat}?overview=false`;
+                const response = await fetch(routeUrl);
+                if (!response.ok) throw new Error();
+                const routeData = await response.json();
+                
+                const remainingDistanceMeters = routeData.routes[0].distance;
+                const remainingDistanceKm = remainingDistanceMeters / 1000;
+                const remainingTimeHours = remainingDistanceKm / avgSpeedKmh;
+                const remainingTimeSeconds = remainingTimeHours * 3600;
+
+                const currentTime = new Date();
+                const etaTime = new Date(currentTime.getTime() + remainingTimeSeconds * 1000);
+                
+                const timeBufferSeconds = (targetTime - etaTime) / 1000;
+                const timeFormatter = new Intl.DateTimeFormat('uk-UA', { hour: '2-digit', minute: '2-digit' });
+
+                tripStatusBar.querySelector('.eta-text').textContent = `ETA: ${timeFormatter.format(etaTime)}`;
+                
+                const statusTextEl = tripStatusBar.querySelector('.status-text');
+                if (timeBufferSeconds > 1800) { // More than 30 mins buffer
+                    tripStatusBar.className = 'on-time visible';
+                    statusTextEl.textContent = `В запасі: ${Math.round(timeBufferSeconds / 60)} хв`;
+                } else if (timeBufferSeconds > 0) { // 0-30 mins buffer
+                    tripStatusBar.className = 'warning visible';
+                    statusTextEl.textContent = `В запасі: ${Math.round(timeBufferSeconds / 60)} хв`;
+                } else { // Late
+                    tripStatusBar.className = 'late visible';
+                    statusTextEl.textContent = `Запізнення: ${Math.round(Math.abs(timeBufferSeconds) / 60)} хв`;
+                }
+
+            } catch(e) {
+                console.error("Live update failed", e);
+                tripStatusBar.querySelector('.status-text').textContent = "Помилка маршруту";
+                tripStatusBar.className = 'late visible';
+            }
+        }
+
+        function endLiveTrip() {
+            if (liveTripWatchId) {
+                navigator.geolocation.clearWatch(liveTripWatchId);
+            }
+            isLiveTripActive = false;
+            liveTripWatchId = null;
+            tripData = {};
+            tripStatusBar.classList.remove('visible');
+        }
+
 
         // --- PROJECT SAVE/LOAD ---
         function saveProject() {
@@ -2063,7 +2457,7 @@
                 visibleButtonIds = JSON.parse(savedConfig);
             } else {
                 // Set a default configuration that includes the new button
-                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button', 'routing-button', 'goto-coords-button', 'upload-button', 'export-button'];
+                visibleButtonIds = ['theme-toggle-button', 'sync-button', 'add-point-button', 'draw-button', 'daylight-trip-button', 'routing-button', 'goto-coords-button', 'upload-button', 'export-button'];
             }
         }
 
@@ -2122,6 +2516,7 @@
                 case 'gps-button': button.addEventListener('click', getGpsLocation); break;
                 case 'route-recorder-button': button.addEventListener('click', toggleRouteRecording); break;
                 case 'routing-button': button.addEventListener('click', startAutomaticRouting); break;
+                case 'daylight-trip-button': button.addEventListener('click', () => daylightTripModal.classList.add('visible')); break;
                 case 'goto-coords-button': button.addEventListener('click', () => gotoCoordsModal.classList.add('visible')); break;
                 case 'upload-button': button.addEventListener('click', () => fileInput.click()); break;
                 case 'export-button': button.addEventListener('click', saveProject); break;
@@ -2351,11 +2746,9 @@
                         tempRouting.on('routesfound', function(e) {
                             const route = e.routes[0];
                             if (route) {
+                                // Add route to drawingsLayer to be visible on DeepState overlay
                                 const routeLine = L.polyline(route.coordinates, {
-                                    color: 'var(--accent-color)',
-                                    weight: 4,
-                                    opacity: 0.8,
-                                    dashArray: '10, 10'
+                                    color: 'var(--accent-color)', weight: 4, opacity: 0.8, dashArray: '10, 10'
                                 });
                                 
                                 const featureGroup = L.featureGroup([routeLine]).addTo(drawingsLayer);
@@ -2448,6 +2841,29 @@
 
         // --- APPLICATION STARTUP ---
         window.addEventListener('load', () => {
+            // Встановлюємо початковий вигляд карти
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    // Успіх: центруємо по координатах користувача
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+                    map.setView([userLat, userLon], 13);
+                    
+                    // Отримуємо погоду для цих координат
+                    fetchWeather(userLat, userLon);
+
+                }, () => {
+                    // Помилка або відмова: ставимо вид за замовчуванням
+                    map.setView([50.41, 30.64], 11);
+                    // І отримуємо погоду для Києва
+                    fetchWeather(50.41, 30.64);
+                });
+            } else {
+                // Якщо браузер не підтримує геолокацію
+                map.setView([50.41, 30.64], 11);
+                fetchWeather(50.41, 30.64);
+            }
+            
             loadCustomIcons();
             loadSavedRoutes();
             loadButtonConfig();
@@ -2466,13 +2882,17 @@
             // Register Service Worker
             if ('serviceWorker' in navigator) {
                  navigator.serviceWorker.register('/sw.js')
-                    .then(r => console.log('SW registered'))
-                    .catch(e => console.log('SW reg failed', e));
+                     .then(r => console.log('SW registered'))
+                     .catch(e => console.log('SW reg failed', e));
             }
 
             fileInput.addEventListener('change', handleFileUpload);
+
+            // Listeners for new Daylight Trip modal
+            document.getElementById('daylight-trip-modal-close-button').addEventListener('click', () => daylightTripModal.classList.remove('visible'));
+            document.getElementById('daylight-trip-submit').addEventListener('click', startDaylightTripPlanning);
+            document.getElementById('end-trip-button').addEventListener('click', endLiveTrip);
         });
     </script>
 </body>
 </html>
-
